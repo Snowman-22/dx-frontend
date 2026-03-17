@@ -7,6 +7,7 @@
 
 .rowBot {
   align-self: flex-start;
+  align-items: flex-start;
 }
 
 .rowUser {
@@ -48,7 +49,8 @@
   background: rgba(255, 255, 255, 0.92);
   box-shadow: 0 14px 30px rgba(165, 175, 150, 0.18);
   color: #445142;
-  font-size: 14px;
+  font-size: 15px;
+  font-weight: 500;
   line-height: 1.75;
 }
 
@@ -58,7 +60,8 @@
   border-radius: 999px;
   background: rgba(226, 238, 223, 0.92);
   color: #3f513b;
-  font-size: 15px;
+  font-size: 16px;
+  font-weight: 500;
   line-height: 1.35;
   box-shadow: 0 8px 18px rgba(172, 185, 166, 0.16);
 }

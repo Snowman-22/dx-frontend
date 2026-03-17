@@ -36,7 +36,7 @@
   min-height: 0;
   width: min(100%, 840px);
   margin: 0 auto;
-  padding: 28px 6px 32px;
+  padding: 28px 6px 100px;
   display: flex;
   flex-direction: column;
   gap: 24px;
@@ -49,12 +49,67 @@
 }
 
 .inputBar {
-  z-index: 2;
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 18px 0 27px;
+  padding: 0 0 56px;
   background: linear-gradient(180deg, rgba(243, 245, 239, 0) 0%, rgba(243, 245, 239, 0.82) 40%, rgba(243, 245, 239, 0.96) 100%);
+}
+
+.inputSection {
+  z-index: 2;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.quickReplyList {
+  width: min(100%, 780px);
+  position: relative;
+  z-index: 3;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px 8px;
+  padding: 0 8px 8px;
+}
+
+.quickReplyListFive {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px 8px;
+}
+
+.quickReplyBtn {
+  min-height: 34px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.86);
+  color: #557255;
+  box-shadow: 0 6px 14px rgba(183, 195, 175, 0.14);
+  font-size: 14px;
+  font-weight: 500;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.quickReplyBtn:hover {
+  background: #7acb78;
+  color: #ffffff;
+  box-shadow: 0 10px 18px rgba(122, 203, 120, 0.24);
+  transform: translateY(-1px);
+}
+
+.quickReplyBtnSelected {
+  background: #7acb78;
+  color: #ffffff;
+  box-shadow: 0 10px 18px rgba(122, 203, 120, 0.24);
 }
 
 .inputWrap {
@@ -66,7 +121,7 @@
   border: 1px solid rgba(228, 224, 217, 0.95);
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 10px 26px rgba(145, 155, 132, 0.14);
+  box-shadow: 0 12px 24px rgba(145, 155, 132, 0.16);
   backdrop-filter: blur(10px);
 }
 
@@ -74,6 +129,7 @@
 .sendBtn {
   width: 38px;
   height: 38px;
+  align-self: center;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -94,10 +150,14 @@
 .textInput {
   flex: 1;
   min-width: 0;
+  max-height: 126px;
   padding: 10px 2px;
   border: none;
   background: transparent;
+  resize: none;
+  overflow-y: hidden;
   font-size: 15px;
+  line-height: 1.45;
   font-family: inherit;
   outline: none;
   color: #314033;
@@ -105,6 +165,15 @@
 
 .textInput::placeholder {
   color: #bdb4a9;
+}
+
+.textInput::-webkit-scrollbar {
+  width: 6px;
+}
+
+.textInput::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(189, 180, 169, 0.55);
 }
 
 .sendBtn {
@@ -126,6 +195,152 @@
   background: #dbe8d4;
 }
 
+.modalOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 28px;
+  background: rgba(247, 249, 244, 0.58);
+  backdrop-filter: blur(8px);
+}
+
+.modalCard {
+  width: min(100%, 640px);
+  max-height: min(78vh, 680px);
+  overflow-y: auto;
+  padding: 26px 26px 22px;
+  border: 1px solid rgba(225, 232, 221, 0.95);
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 24px 64px rgba(113, 127, 104, 0.18);
+}
+
+.modalHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.modalEyebrow {
+  margin: 0 0 8px;
+  color: #8fa088;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+
+.modalTitle {
+  margin: 0;
+  color: #334235;
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.modalCloseBtn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  color: #8ea08d;
+  font-size: 28px;
+  line-height: 1;
+  background: rgba(239, 245, 236, 0.92);
+}
+
+.modalCloseBtn:hover {
+  background: rgba(227, 236, 222, 0.96);
+}
+
+.applianceGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(104px, 1fr));
+  gap: 14px;
+}
+
+.applianceCard {
+  min-height: 128px;
+  padding: 14px 10px 12px;
+  border: 1px solid rgba(223, 229, 219, 0.96);
+  border-radius: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: #ffffff;
+  box-shadow: 0 8px 16px rgba(177, 189, 168, 0.08);
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.applianceCard:hover {
+  transform: translateY(-1px);
+  border-color: rgba(169, 197, 161, 0.95);
+  box-shadow: 0 12px 22px rgba(154, 177, 143, 0.12);
+}
+
+.applianceCardSelected {
+  border-color: rgba(132, 188, 126, 0.95);
+  background: rgba(241, 248, 239, 0.98);
+  box-shadow: 0 14px 24px rgba(132, 188, 126, 0.16);
+}
+
+.applianceIcon {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #7f9580;
+  font-size: 24px;
+  font-weight: 600;
+  background: linear-gradient(180deg, rgba(247, 250, 245, 0.96) 0%, rgba(234, 242, 230, 0.96) 100%);
+}
+
+.applianceCardSelected .applianceIcon {
+  color: #5d8658;
+  background: linear-gradient(180deg, rgba(236, 246, 232, 1) 0%, rgba(219, 239, 214, 1) 100%);
+}
+
+.applianceLabel {
+  color: #415042;
+  font-size: 15px;
+  font-weight: 500;
+  text-align: center;
+  line-height: 1.3;
+}
+
+.modalFooter {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+.modalActionBtn {
+  min-width: 112px;
+  padding: 12px 20px;
+  border-radius: 999px;
+  background: #7acb78;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 600;
+  box-shadow: 0 12px 20px rgba(122, 203, 120, 0.22);
+}
+
+.modalActionBtn:hover {
+  background: #6bbb69;
+}
+
 @media (max-width: 900px) {
   .chatArea {
     padding: 28px 0 0;
@@ -134,10 +349,27 @@
   .messages {
     width: 100%;
     padding-top: 18px;
+    padding-bottom: 100px;
   }
 
   .inputWrap {
     width: 100%;
+  }
+
+  .quickReplyList {
+    width: 100%;
+  }
+
+  .quickReplyListFive {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .modalOverlay {
+    padding: 18px;
+  }
+
+  .modalCard {
+    padding: 22px 18px 18px;
   }
 }
 
@@ -148,10 +380,22 @@
 
   .messages {
     gap: 18px;
-    padding-bottom: 20px;
+    padding-bottom: 100px;
   }
 
   .inputWrap {
     padding-left: 12px;
+  }
+
+  .modalTitle {
+    font-size: 18px;
+  }
+
+  .applianceGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .applianceCard {
+    min-height: 112px;
   }
 }

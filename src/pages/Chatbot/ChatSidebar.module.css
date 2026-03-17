@@ -1,0 +1,139 @@
+.sidebar {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-self: flex-start;
+  min-height: 100vh;
+  padding: 25px 20px 39px 17px;
+  overflow: visible;
+  flex-shrink: 0;
+  border-right: none;
+  background:
+    radial-gradient(circle at center, rgba(241, 247, 241, 0.98) 0%, rgba(241, 247, 241, 0.94) 22%, rgba(241, 247, 241, 0) 52%),
+    linear-gradient(
+      135deg,
+      #fefffe 0%,
+      #fdfffd 20%,
+      #ffffff 40%,
+      #eef6ee 74%,
+      #e5f0e5 100%
+    );
+  backdrop-filter: blur(14px);
+  transition: width 0.28s ease;
+}
+
+.sidebarOpen {
+  width: 246px;
+}
+
+.sidebarClosed {
+  width: 81px;
+}
+
+.sidebarHeader {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 25px;
+  padding: 0 0 22px;
+}
+
+.toggleBtn {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6d8169;
+  background: rgba(255, 255, 255, 0.62);
+  box-shadow: 0 8px 20px rgba(196, 212, 190, 0.2);
+  flex-shrink: 0;
+  transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.toggleBtn:hover {
+  background: rgba(255, 255, 255, 0.9);
+  color: #4f614b;
+  box-shadow: 0 10px 24px rgba(187, 203, 180, 0.26);
+}
+
+.newChatBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  color: #5f705d;
+  font-size: 16px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: color 0.2s ease;
+}
+
+.newChatBtn:hover {
+  color: #52644f;
+}
+
+.sidebarNav {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 17px 0 0;
+}
+
+.sidebarFooter {
+  margin-top: auto;
+  padding-top: 22px;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.exitBtn {
+  width: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 34px;
+  padding: 6px 24px;
+  border-radius: 11px;
+  color: #60725c;
+  background: rgba(255, 255, 255, 0.52);
+  box-shadow: 0 6px 16px rgba(194, 208, 188, 0.1);
+  font-size: 12px;
+  font-weight: 500;
+  transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.exitBtn:hover {
+  background: rgba(255, 255, 255, 0.82);
+  color: #41513d;
+  transform: translateY(-1px);
+}
+
+.exitBtnCollapsed {
+  width: 34px;
+  min-width: 34px;
+  min-height: 34px;
+  padding: 0;
+}
+
+.navLink {
+  color: #98a694;
+  font-size: 15px;
+  line-height: 1.5;
+  white-space: normal;
+}
+
+.navLink:last-child {
+  color: #465444;
+  font-weight: 600;
+}
+
+@media (max-width: 640px) {
+  .sidebarOpen {
+    width: 202px;
+  }
+}

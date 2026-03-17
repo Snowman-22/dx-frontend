@@ -1,0 +1,133 @@
+.page {
+  min-height: calc(100vh - var(--header-height));
+}
+
+/* ── Hero ── */
+.hero {
+  text-align: center;
+  padding: 64px 20px 40px;
+  background: linear-gradient(180deg, #e8faf5 0%, #f5fdfb 100%);
+}
+
+.heroIcon {
+  margin: 0 auto 20px;
+}
+
+.heroTitle {
+  font-size: 28px;
+  font-weight: 800;
+  color: #1a6b5a;
+  letter-spacing: -0.5px;
+  margin-bottom: 14px;
+}
+
+.heroDesc {
+  font-size: 15px;
+  color: #5a9e8f;
+  line-height: 1.7;
+}
+
+/* ── Card Section ── */
+.cardSection {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 48px 20px 80px;
+  text-align: center;
+}
+
+.cardGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 40px;
+}
+
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 16px 20px;
+  border-radius: 16px;
+  border: 2px solid var(--color-gray-200);
+  background: var(--color-white);
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+  font-family: inherit;
+  text-align: center;
+}
+
+.card:hover {
+  border-color: #83E3CB;
+  box-shadow: 0 4px 20px rgba(131, 227, 203, 0.15);
+  transform: translateY(-2px);
+}
+
+.cardActive {
+  border-color: #2DBFA0;
+  box-shadow: 0 4px 24px rgba(45, 191, 160, 0.2);
+  background: #f5fdfb;
+}
+
+.cardActive::after {
+  content: "\2713";
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #2DBFA0;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.cardThumb {
+  margin-bottom: 12px;
+}
+
+.cardTitle {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-dark);
+  margin-bottom: 8px;
+}
+
+.cardDesc {
+  font-size: 12px;
+  color: var(--color-gray-500);
+  line-height: 1.5;
+}
+
+/* ── Start Button ── */
+.startBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 48px;
+  border-radius: 28px;
+  border: 2px solid var(--color-gray-300);
+  background: var(--color-white);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-dark);
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s, color 0.2s;
+  font-family: inherit;
+}
+
+.startBtn:hover:not(:disabled) {
+  border-color: #2DBFA0;
+  background: #2DBFA0;
+  color: #fff;
+}
+
+.startBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

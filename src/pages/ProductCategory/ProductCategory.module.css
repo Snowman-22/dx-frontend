@@ -1,0 +1,559 @@
+.page {
+  min-height: calc(100vh - var(--header-height));
+  background: var(--color-white);
+}
+
+/* ── Breadcrumb ── */
+.breadcrumbWrap {
+  background: var(--color-gray-50);
+  border-bottom: 1px solid var(--color-gray-200);
+}
+
+.breadcrumbInner {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 12px 40px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.breadcrumbItem {
+  display: flex;
+  align-items: center;
+}
+
+.breadcrumbSep {
+  margin: 0 6px;
+  color: var(--color-gray-400);
+}
+
+.breadcrumbLink {
+  font-size: 13px;
+  color: var(--color-gray-500);
+  transition: color 0.15s;
+}
+
+.breadcrumbLink:hover {
+  color: var(--color-primary);
+}
+
+.breadcrumbCurrent {
+  font-size: 13px;
+  color: var(--color-dark);
+  font-weight: 600;
+}
+
+/* ── Container ── */
+.container {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 0 40px;
+  display: flex;
+  gap: 48px;
+  padding-top: 32px;
+  padding-bottom: 80px;
+}
+
+/* ── Sidebar ── */
+.sidebar {
+  width: 210px;
+  flex-shrink: 0;
+  padding-top: 8px;
+}
+
+.sideGroup {
+  border-bottom: 1px solid var(--color-gray-100);
+}
+
+.sideTitle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--color-gray-600);
+  transition: all 0.15s;
+}
+
+.sideTitle:hover {
+  color: var(--color-dark);
+}
+
+.sideArrow {
+  color: var(--color-gray-400);
+  transition: transform 0.15s;
+}
+
+.sideTitleActive {
+  font-weight: 700;
+  color: var(--color-dark);
+}
+
+.sideTitleActive .sideArrow {
+  transform: rotate(90deg);
+  color: var(--color-dark);
+}
+
+.sideSubList {
+  padding: 0 0 12px 12px;
+}
+
+.sideSubLink {
+  display: block;
+  padding: 6px 0;
+  font-size: 13px;
+  color: var(--color-gray-500);
+  transition: color 0.15s;
+}
+
+.sideSubLink:hover {
+  color: var(--color-primary);
+}
+
+.sideSubLinkActive {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+/* 사이드바 배너 */
+.sideBanner {
+  margin-top: 16px;
+  border-radius: 12px;
+  background: var(--color-gray-50);
+  overflow: hidden;
+  transition: background 0.15s;
+  cursor: pointer;
+}
+
+.sideBanner:hover {
+  background: var(--color-gray-100);
+}
+
+.sideBannerInner {
+  padding: 20px 16px;
+}
+
+.sideBannerTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-dark);
+  margin-bottom: 6px;
+}
+
+.sideBannerDesc {
+  font-size: 12px;
+  color: var(--color-gray-500);
+  line-height: 1.5;
+  margin-bottom: 10px;
+}
+
+.sideBannerLink {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+/* ── Main Content ── */
+.main {
+  flex: 1;
+  min-width: 0;
+}
+
+/* 카테고리 배너 */
+.categoryBanner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(135deg, var(--color-gray-50) 0%, #f5f0eb 100%);
+  border-radius: 16px;
+  padding: 40px 48px;
+  margin-bottom: 32px;
+  overflow: hidden;
+}
+
+.categoryBannerContent {
+  flex: 1;
+}
+
+.categoryBannerTitle {
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--color-dark);
+  letter-spacing: -0.5px;
+  margin-bottom: 12px;
+}
+
+.categoryBannerDesc {
+  font-size: 15px;
+  color: var(--color-gray-600);
+  line-height: 1.6;
+  max-width: 400px;
+}
+
+.categoryBannerImage {
+  width: 200px;
+  height: 140px;
+  background: var(--color-gray-200);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-gray-400);
+  font-size: 13px;
+  flex-shrink: 0;
+  margin-left: 40px;
+}
+
+/* 페이지 헤더 (배너가 없을 때) */
+.pageHeader {
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid var(--color-dark);
+}
+
+.pageTitle {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--color-dark);
+  letter-spacing: -0.5px;
+}
+
+/* ── Filter Bar ── */
+.filterBar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.filterChip {
+  padding: 7px 18px;
+  border: 1px solid var(--color-gray-300);
+  border-radius: 20px;
+  font-size: 13px;
+  color: var(--color-gray-600);
+  transition: all 0.15s;
+}
+
+.filterChip:hover {
+  border-color: var(--color-dark);
+  color: var(--color-dark);
+}
+
+.filterChipActive {
+  background: var(--color-dark);
+  border-color: var(--color-dark);
+  color: var(--color-white);
+}
+
+.filterChipActive:hover {
+  background: var(--color-black);
+  color: var(--color-white);
+}
+
+/* ── Sort Bar ── */
+.sortBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--color-gray-200);
+}
+
+.productCount {
+  font-size: 14px;
+  color: var(--color-gray-500);
+}
+
+.productCount strong {
+  color: var(--color-dark);
+  font-weight: 700;
+}
+
+.sortOptions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.sortBtn {
+  padding: 6px 12px;
+  border: none;
+  background: none;
+  font-size: 13px;
+  color: var(--color-gray-500);
+  cursor: pointer;
+  transition: color 0.15s;
+  position: relative;
+}
+
+.sortBtn:hover {
+  color: var(--color-dark);
+}
+
+.sortBtnActive {
+  color: var(--color-dark);
+  font-weight: 700;
+}
+
+.sortBtn + .sortBtn::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1px;
+  height: 12px;
+  background: var(--color-gray-300);
+}
+
+/* ── Product Grid ── */
+.productGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+/* ── Product Card ── */
+.card {
+  border: 1px solid var(--color-gray-200);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.25s;
+  cursor: pointer;
+  position: relative;
+}
+
+.card:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.cardImage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  background: var(--color-gray-50);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.badgeRow {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  display: flex;
+  gap: 6px;
+  z-index: 2;
+}
+
+.badge {
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  background: var(--color-primary);
+  color: var(--color-white);
+}
+
+.badgeOnly {
+  background: var(--color-dark);
+}
+
+.badgeNew {
+  background: #2563eb;
+}
+
+.cardActions {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  z-index: 2;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.card:hover .cardActions {
+  opacity: 1;
+}
+
+.cardActionBtn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--color-gray-300);
+  background: var(--color-white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--color-gray-600);
+  transition: all 0.15s;
+}
+
+.cardActionBtn:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: #fff5f7;
+}
+
+.imagePlaceholder {
+  font-size: 14px;
+  color: var(--color-gray-400);
+}
+
+.cardBody {
+  padding: 16px 16px 20px;
+}
+
+.cardName {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-dark);
+  line-height: 1.4;
+  margin-bottom: 4px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.cardModel {
+  font-size: 12px;
+  color: var(--color-gray-400);
+  margin-bottom: 8px;
+}
+
+/* 리뷰/평점 */
+.ratingRow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.stars {
+  display: flex;
+  gap: 1px;
+}
+
+.starFilled {
+  color: #f59e0b;
+  fill: #f59e0b;
+}
+
+.starEmpty {
+  color: var(--color-gray-300);
+}
+
+.ratingText {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-dark);
+}
+
+.reviewCount {
+  font-size: 12px;
+  color: var(--color-gray-400);
+}
+
+/* 색상 */
+.colorText {
+  font-size: 12px;
+  color: var(--color-gray-400);
+  margin-bottom: 10px;
+}
+
+/* 가격 */
+.cardPriceRow {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.discountRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.discountRate {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.originalPrice {
+  font-size: 13px;
+  color: var(--color-gray-400);
+  text-decoration: line-through;
+}
+
+.cardPrice {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-dark);
+}
+
+.priceUnit {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* 특징 태그 */
+.featureRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 10px;
+}
+
+.featureTag {
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: var(--color-gray-50);
+  font-size: 11px;
+  color: var(--color-gray-600);
+  border: 1px solid var(--color-gray-200);
+}
+
+/* ── Empty State ── */
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  text-align: center;
+}
+
+.emptyIcon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: var(--color-gray-50);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-gray-300);
+  margin-bottom: 20px;
+}
+
+.emptyTitle {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-dark);
+  margin-bottom: 8px;
+}
+
+.emptyDesc {
+  font-size: 14px;
+  color: var(--color-gray-400);
+}

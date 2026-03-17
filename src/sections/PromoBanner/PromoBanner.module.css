@@ -1,0 +1,82 @@
+.promoBanner {
+  padding: 20px 0 40px;
+}
+
+.inner {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 0 40px;
+  display: flex;
+  gap: 20px;
+  overflow-x: auto;
+}
+
+.inner::-webkit-scrollbar {
+  display: none;
+}
+
+.bannerCard {
+  flex: 1;
+  min-width: 400px;
+  border-radius: 16px;
+  padding: 36px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  transition: transform 0.2s;
+}
+
+.bannerCard:hover {
+  transform: translateY(-2px);
+}
+
+.bannerText {
+  flex: 1;
+}
+
+.bannerTitle {
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.4;
+  color: var(--color-dark);
+  margin-bottom: 12px;
+}
+
+.bannerLink {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-dark);
+  border-bottom: 1px solid var(--color-dark);
+  padding-bottom: 2px;
+}
+
+.bannerImage {
+  flex-shrink: 0;
+}
+
+.imagePlaceholder {
+  width: 140px;
+  height: 100px;
+  background: rgba(0, 0, 0, 0.06);
+  border-radius: 12px;
+}
+
+.dots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.dot,
+.dotActive {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-gray-300);
+}
+
+.dotActive {
+  background: var(--color-dark);
+}

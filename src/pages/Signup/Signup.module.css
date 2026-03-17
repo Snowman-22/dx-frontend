@@ -1,0 +1,255 @@
+.page {
+  min-height: calc(100vh - var(--header-height));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-gray-50);
+  padding: 40px 20px;
+}
+
+.card {
+  width: 100%;
+  max-width: 440px;
+  background: var(--color-white);
+  border-radius: 16px;
+  box-shadow: 0 2px 24px rgba(0, 0, 0, 0.08);
+  padding: 48px 40px;
+}
+
+.logoArea {
+  text-align: center;
+  margin-bottom: 36px;
+}
+
+.logoArea svg {
+  margin: 0 auto 12px;
+}
+
+.logoImage {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+  margin: 0 auto 12px;
+}
+
+.logoTitle {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--color-dark);
+  letter-spacing: -0.5px;
+}
+
+.logoSub {
+  font-size: 14px;
+  color: var(--color-gray-500);
+  margin-top: 6px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-dark);
+}
+
+.input {
+  width: 100%;
+  height: 48px;
+  padding: 0 16px;
+  border: 1px solid var(--color-gray-300);
+  border-radius: 8px;
+  font-size: 15px;
+  color: var(--color-dark);
+  transition: border-color 0.2s;
+  font-family: inherit;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.input::placeholder {
+  color: var(--color-gray-400);
+}
+
+.hint {
+  font-size: 12px;
+  color: var(--color-gray-400);
+}
+
+/* ── Gender ── */
+.genderRow {
+  display: flex;
+  gap: 10px;
+}
+
+.genderOption {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 48px;
+  border: 1px solid var(--color-gray-300);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-gray-600);
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s, background 0.2s;
+}
+
+.genderOption:hover {
+  border-color: var(--color-gray-500);
+}
+
+.genderActive {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: rgba(165, 0, 52, 0.04);
+}
+
+.genderRadio {
+  display: none;
+}
+
+/* ── Birth Date ── */
+.birthRow {
+  display: flex;
+  gap: 8px;
+}
+
+.select {
+  flex: 1;
+  height: 48px;
+  padding: 0 12px;
+  border: 1px solid var(--color-gray-300);
+  border-radius: 8px;
+  font-size: 14px;
+  color: var(--color-dark);
+  background: var(--color-white);
+  cursor: pointer;
+  transition: border-color 0.2s;
+  font-family: inherit;
+  appearance: auto;
+}
+
+.select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.error {
+  font-size: 13px;
+  color: var(--color-primary);
+  margin-top: -4px;
+}
+
+.success {
+  font-size: 13px;
+  color: #16a34a;
+  margin-top: -4px;
+}
+
+.agreements {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.checkRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.checkbox {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--color-primary);
+  cursor: pointer;
+}
+
+.checkLabel {
+  font-size: 14px;
+  color: var(--color-dark);
+  cursor: pointer;
+}
+
+.checkLabelAll {
+  font-weight: 700;
+}
+
+.checkDivider {
+  height: 1px;
+  background: var(--color-gray-200);
+  margin: 4px 0;
+}
+
+.required {
+  color: var(--color-primary);
+  font-size: 12px;
+  margin-left: 4px;
+}
+
+.submitBtn {
+  width: 100%;
+  height: 52px;
+  background: var(--color-primary);
+  color: var(--color-white);
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  margin-top: 12px;
+  font-family: inherit;
+}
+
+.submitBtn:hover {
+  opacity: 0.9;
+}
+
+.submitBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.bottomLinks {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 24px;
+}
+
+.bottomLink {
+  font-size: 14px;
+  color: var(--color-gray-600);
+  transition: color 0.2s;
+}
+
+.bottomLink:hover {
+  color: var(--color-primary);
+}
+
+.dot {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--color-gray-300);
+}

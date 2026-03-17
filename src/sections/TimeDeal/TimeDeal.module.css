@@ -1,0 +1,152 @@
+.timeDeal {
+  padding: 60px 0;
+}
+
+.inner {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 0 40px;
+}
+
+.header {
+  margin-bottom: 28px;
+}
+
+.title {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--color-dark);
+  margin-bottom: 8px;
+}
+
+.subtitle {
+  font-size: 15px;
+  color: var(--color-gray-500);
+}
+
+.productList {
+  display: flex;
+  gap: 20px;
+  overflow-x: auto;
+  padding-bottom: 20px;
+}
+
+.productList::-webkit-scrollbar {
+  display: none;
+}
+
+.productCard {
+  flex: 0 0 calc(33.333% - 14px);
+  min-width: 280px;
+}
+
+.productCard:hover .imagePlaceholder {
+  background: var(--color-gray-200);
+}
+
+.imageWrap {
+  position: relative;
+  margin-bottom: 16px;
+}
+
+.badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: var(--color-red);
+  color: var(--color-white);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 10px;
+  border-radius: 50%;
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  line-height: 1.2;
+  z-index: 1;
+}
+
+.imagePlaceholder {
+  width: 100%;
+  height: 280px;
+  background: var(--color-gray-100);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-gray-400);
+  font-size: 14px;
+  transition: background 0.2s;
+}
+
+.info {
+  padding: 0 4px;
+}
+
+.productName {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-dark);
+  line-height: 1.5;
+  margin-bottom: 4px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.model {
+  font-size: 13px;
+  color: var(--color-gray-500);
+  margin-bottom: 8px;
+}
+
+.originalPrice {
+  font-size: 14px;
+  margin-bottom: 2px;
+}
+
+.discountRate {
+  color: var(--color-red);
+  font-weight: 700;
+}
+
+.lineThrough {
+  text-decoration: line-through;
+  color: var(--color-gray-400);
+}
+
+.price {
+  font-size: 14px;
+  color: var(--color-dark);
+}
+
+.priceLabel {
+  color: var(--color-red);
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.priceValue {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--color-red);
+}
+
+.scrollBar {
+  width: 100%;
+  height: 3px;
+  background: var(--color-gray-200);
+  border-radius: 2px;
+  margin-top: 8px;
+}
+
+.scrollThumb {
+  width: 40%;
+  height: 100%;
+  background: var(--color-dark);
+  border-radius: 2px;
+}

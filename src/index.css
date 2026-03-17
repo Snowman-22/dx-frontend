@@ -1,0 +1,64 @@
+:root {
+  --color-primary: #a50034;
+  --color-black: #000000;
+  --color-dark: #1a1a1a;
+  --color-gray-900: #222222;
+  --color-gray-700: #333333;
+  --color-gray-600: #555555;
+  --color-gray-500: #767676;
+  --color-gray-400: #999999;
+  --color-gray-300: #cccccc;
+  --color-gray-200: #e6e6e6;
+  --color-gray-100: #f4f4f4;
+  --color-gray-50: #f9f9f9;
+  --color-white: #ffffff;
+  --color-red: #ea1917;
+  --color-beige: #f0e6d3;
+
+  --max-width: 1380px;
+  --header-height: 120px;
+
+  font-family: "LG Smart UI", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color: var(--color-dark);
+  background-color: var(--color-white);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+ul,
+ol {
+  list-style: none;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  background: none;
+  font-family: inherit;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}

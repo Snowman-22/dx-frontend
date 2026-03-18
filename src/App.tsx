@@ -7,6 +7,7 @@ import Login from "@/pages/Login/Login";
 import Signup from "@/pages/Signup/Signup";
 import Support from "@/pages/Support/Support";
 import Recommend from "@/pages/Recommend/Recommend";
+import RecommendChatbot from "@/pages/RecommendChatbot/RecommendChatbot";
 import Chatbot from "@/pages/Chatbot/Chatbot";
 import NotReady from "@/pages/NotReady/NotReady";
 
@@ -15,6 +16,7 @@ function App() {
     <Routes>
       {/* Full-screen (no Header/Footer) */}
       <Route path="/chatbot" element={<Chatbot />} />
+      <Route path="/recommendchatbot" element={<RecommendChatbot />} />
 
       {/* Standard layout (Header + Footer) */}
       <Route element={<MainLayout />}>

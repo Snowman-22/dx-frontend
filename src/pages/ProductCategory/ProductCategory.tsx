@@ -325,7 +325,11 @@ function ProductCard({ product }: { product: Product }) {
             <FiBarChart2 size={18} />
           </button>
         </div>
-        <span className={styles.imagePlaceholder}>제품 이미지</span>
+        {product.imageUrl ? (
+          <img src={product.imageUrl} alt={product.name} className={styles.cardImg} />
+        ) : (
+          <span className={styles.imagePlaceholder}>제품 이미지</span>
+        )}
       </div>
 
       {/* 바디 영역 */}

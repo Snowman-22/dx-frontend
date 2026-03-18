@@ -11,6 +11,7 @@ export interface Product {
   reviewCount?: number;
   colors?: string[];
   features?: string[];
+  imageUrl?: string;
 }
 
 // URL path segment → 한글 레이블 매핑
@@ -206,42 +207,42 @@ export const CATEGORY_DESCRIPTIONS: Record<string, string> = {
 const PRODUCTS: Product[] = [
   // ═══════════════ TV/오디오 ═══════════════
   // TV - 올레드
-  { id: "tv-1", name: "LG OLED evo TV AI G4", model: "OLED83G4KNA", price: 7490000, originalPrice: 8290000, badges: ["인기"], category: "tv", subCategory: "oled", rating: 4.8, reviewCount: 342, colors: ["블랙"], features: ["AI 화질엔진", "무반사 올레드 글레어프리", "Dolby Atmos"] },
-  { id: "tv-2", name: "LG OLED evo TV AI C4", model: "OLED65C4KNA", price: 2390000, badges: ["닷컴 ONLY"], category: "tv", subCategory: "oled", rating: 4.7, reviewCount: 521, colors: ["블랙"], features: ["α9 AI 프로세서", "120Hz", "게이밍 모드"] },
-  { id: "tv-3", name: "LG OLED evo TV B4", model: "OLED55B4KNA", price: 1590000, badges: [], category: "tv", subCategory: "oled", rating: 4.6, reviewCount: 189, colors: ["블랙"] },
-  { id: "tv-4", name: "LG OLED evo TV AI M4", model: "OLED77M4KNA", price: 11900000, badges: ["신제품", "Zero Connect"], category: "tv", subCategory: "oled", rating: 4.9, reviewCount: 45, colors: ["블랙"] },
-  { id: "tv-5", name: "LG OLED evo TV AI G4 77형", model: "OLED77G4KNA", price: 9490000, originalPrice: 10290000, badges: [], category: "tv", subCategory: "oled", rating: 4.8, reviewCount: 128, colors: ["블랙"] },
-  { id: "tv-6", name: "LG OLED evo TV AI C4 77형", model: "OLED77C4KNA", price: 3990000, badges: ["인기"], category: "tv", subCategory: "oled", rating: 4.7, reviewCount: 267, colors: ["블랙"] },
+  { id: "tv-1", name: "LG OLED evo TV AI G4", model: "OLED83G4KNA", imageUrl: "https://www.lge.co.kr/kr/images/tvs/md09977827/md09977827-280x280.jpg", price: 7490000, originalPrice: 8290000, badges: ["인기"], category: "tv", subCategory: "oled", rating: 4.8, reviewCount: 342, colors: ["블랙"], features: ["AI 화질엔진", "무반사 올레드 글레어프리", "Dolby Atmos"] },
+  { id: "tv-2", name: "LG OLED evo TV AI C4", model: "OLED65C4KNA", imageUrl: "https://www.lge.co.kr/kr/images/tvs/md10579840/md10579840-280x280.jpg", price: 2390000, badges: ["닷컴 ONLY"], category: "tv", subCategory: "oled", rating: 4.7, reviewCount: 521, colors: ["블랙"], features: ["α9 AI 프로세서", "120Hz", "게이밍 모드"] },
+  { id: "tv-3", name: "LG OLED evo TV B4", model: "OLED55B4KNA", imageUrl: "https://www.lge.co.kr/kr/images/tvs/md10579833/md10579833-280x280.jpg", price: 1590000, badges: [], category: "tv", subCategory: "oled", rating: 4.6, reviewCount: 189, colors: ["블랙"] },
+  { id: "tv-4", name: "LG OLED evo TV AI M4", model: "OLED77M4KNA", imageUrl: "https://www.lge.co.kr/kr/images/tvs/md10579838/md10579838-280x280.jpg", price: 11900000, badges: ["신제품", "Zero Connect"], category: "tv", subCategory: "oled", rating: 4.9, reviewCount: 45, colors: ["블랙"] },
+  { id: "tv-5", name: "LG OLED evo TV AI G4 77형", model: "OLED77G4KNA", imageUrl: "https://www.lge.co.kr/kr/images/tvs/md10579838/md10579838-280x280.jpg", price: 9490000, originalPrice: 10290000, badges: [], category: "tv", subCategory: "oled", rating: 4.8, reviewCount: 128, colors: ["블랙"] },
+  { id: "tv-6", name: "LG OLED evo TV AI C4 77형", model: "OLED77C4KNA", imageUrl: "https://www.lge.co.kr/kr/images/tvs/md10579838/md10579838-280x280.jpg", price: 3990000, badges: ["인기"], category: "tv", subCategory: "oled", rating: 4.7, reviewCount: 267, colors: ["블랙"] },
 
   // TV - QNED
-  { id: "tv-7", name: "LG QNED TV AI 86형", model: "86QNED87KRA", price: 2990000, badges: ["신제품"], category: "tv", subCategory: "qned", rating: 4.5, reviewCount: 73, colors: ["블랙"] },
-  { id: "tv-8", name: "LG QNED TV 75형", model: "75QNED82KRA", price: 1890000, originalPrice: 2190000, badges: [], category: "tv", subCategory: "qned", rating: 4.4, reviewCount: 156 },
-  { id: "tv-9", name: "LG QNED TV AI 75형", model: "75QNED91KRA", price: 2490000, badges: ["인기"], category: "tv", subCategory: "qned", rating: 4.6, reviewCount: 98, colors: ["블랙"] },
-  { id: "tv-10", name: "LG QNED TV 65형", model: "65QNED80KRA", price: 1290000, badges: [], category: "tv", subCategory: "qned", rating: 4.3, reviewCount: 211 },
-  { id: "tv-11", name: "LG QNED TV 55형", model: "55QNED80KRA", price: 990000, badges: [], category: "tv", subCategory: "qned", rating: 4.4, reviewCount: 145 },
+  { id: "tv-7", name: "LG QNED TV AI 86형", model: "86QNED87KRA", imageUrl: "https://www.lge.co.kr/kr/images/tvs/md10543851/md10543851-280x280.jpg", price: 2990000, badges: ["신제품"], category: "tv", subCategory: "qned", rating: 4.5, reviewCount: 73, colors: ["블랙"] },
+  { id: "tv-8", name: "LG QNED TV 75형", model: "75QNED82KRA", imageUrl: "https://www.lge.co.kr/kr/images/tvs/md10654890/md10654890-280x280.jpg", price: 1890000, originalPrice: 2190000, badges: [], category: "tv", subCategory: "qned", rating: 4.4, reviewCount: 156 },
+  { id: "tv-9", name: "LG QNED TV AI 75형", model: "75QNED91KRA", imageUrl: "https://www.lge.co.kr/kr/images/tvs/md10654890/md10654890-280x280.jpg", price: 2490000, badges: ["인기"], category: "tv", subCategory: "qned", rating: 4.6, reviewCount: 98, colors: ["블랙"] },
+  { id: "tv-10", name: "LG QNED TV 65형", model: "65QNED80KRA", imageUrl: "https://www.lge.co.kr/kr/images/tvs/md10654892/md10654892-280x280.jpg", price: 1290000, badges: [], category: "tv", subCategory: "qned", rating: 4.3, reviewCount: 211 },
+  { id: "tv-11", name: "LG QNED TV 55형", model: "55QNED80KRA", imageUrl: "https://www.lge.co.kr/kr/images/tvs/md10655839/md10655839-280x280.jpg", price: 990000, badges: [], category: "tv", subCategory: "qned", rating: 4.4, reviewCount: 145 },
 
   // TV - 나노셀
-  { id: "tv-12", name: "LG 나노셀 TV AI 65형", model: "65NANO87KNA", price: 1290000, badges: [], category: "tv", subCategory: "nanocell", rating: 4.3, reviewCount: 187 },
-  { id: "tv-13", name: "LG 나노셀 TV 55형", model: "55NANO87KNA", price: 890000, badges: ["인기"], category: "tv", subCategory: "nanocell", rating: 4.2, reviewCount: 312 },
-  { id: "tv-14", name: "LG 나노셀 TV 75형", model: "75NANO87KNA", price: 1890000, originalPrice: 2090000, badges: [], category: "tv", subCategory: "nanocell", rating: 4.4, reviewCount: 89 },
+  { id: "tv-12", name: "LG 나노셀 TV AI 65형", model: "65NANO87KNA", imageUrl: "https://www.lge.co.kr/kr/images/tvs/md10573849/md10573849-280x280.jpg", price: 1290000, badges: [], category: "tv", subCategory: "nanocell", rating: 4.3, reviewCount: 187 },
+  { id: "tv-13", name: "LG 나노셀 TV 55형", model: "55NANO87KNA", imageUrl: "https://www.lge.co.kr/kr/images/tvs/md10573851/md10573851-280x280.jpg", price: 890000, badges: ["인기"], category: "tv", subCategory: "nanocell", rating: 4.2, reviewCount: 312 },
+  { id: "tv-14", name: "LG 나노셀 TV 75형", model: "75NANO87KNA", imageUrl: "https://www.lge.co.kr/kr/images/tvs/md10573847/md10573847-280x280.jpg", price: 1890000, originalPrice: 2090000, badges: [], category: "tv", subCategory: "nanocell", rating: 4.4, reviewCount: 89 },
 
   // TV - 울트라 HD
-  { id: "tv-15", name: "LG 울트라 HD TV AI 75형", model: "75UT9300KNA", price: 1690000, badges: ["인기"], category: "tv", subCategory: "ultra-hd", rating: 4.3, reviewCount: 245 },
-  { id: "tv-16", name: "LG 울트라 HD TV 65형", model: "65UT8300KNA", price: 990000, badges: [], category: "tv", subCategory: "ultra-hd", rating: 4.2, reviewCount: 178 },
-  { id: "tv-17", name: "LG 울트라 HD TV 55형", model: "55UT8300KNA", price: 790000, badges: [], category: "tv", subCategory: "ultra-hd", rating: 4.1, reviewCount: 389 },
-  { id: "tv-18", name: "LG 울트라 HD TV 50형", model: "50UT8300KNA", price: 690000, originalPrice: 790000, badges: [], category: "tv", subCategory: "ultra-hd", rating: 4.0, reviewCount: 456 },
-  { id: "tv-19", name: "LG 울트라 HD TV 43형", model: "43UT8300KNA", price: 590000, badges: [], category: "tv", subCategory: "ultra-hd", rating: 4.1, reviewCount: 523 },
+  { id: "tv-15", name: "LG 울트라 HD TV AI 75형", model: "75UT9300KNA", imageUrl: "https://www.lge.co.kr/kr/images/tvs/md10314853/md10314853-280x280.jpg", price: 1690000, badges: ["인기"], category: "tv", subCategory: "ultra-hd", rating: 4.3, reviewCount: 245 },
+  { id: "tv-16", name: "LG 울트라 HD TV 65형", model: "65UT8300KNA", imageUrl: "https://www.lge.co.kr/kr/images/tvs/md10575830/md10575830-280x280.jpg", price: 990000, badges: [], category: "tv", subCategory: "ultra-hd", rating: 4.2, reviewCount: 178 },
+  { id: "tv-17", name: "LG 울트라 HD TV 55형", model: "55UT8300KNA", imageUrl: "https://www.lge.co.kr/kr/images/tvs/md10319888/md10319888-280x280.jpg", price: 790000, badges: [], category: "tv", subCategory: "ultra-hd", rating: 4.1, reviewCount: 389 },
+  { id: "tv-18", name: "LG 울트라 HD TV 50형", model: "50UT8300KNA", imageUrl: "https://www.lge.co.kr/kr/images/tvs/md10314863/md10314863-280x280.jpg", price: 690000, originalPrice: 790000, badges: [], category: "tv", subCategory: "ultra-hd", rating: 4.0, reviewCount: 456 },
+  { id: "tv-19", name: "LG 울트라 HD TV 43형", model: "43UT8300KNA", imageUrl: "https://www.lge.co.kr/kr/images/tvs/md10319890/md10319890-280x280.jpg", price: 590000, badges: [], category: "tv", subCategory: "ultra-hd", rating: 4.1, reviewCount: 523 },
 
   // TV - 일반 LED
-  { id: "tv-20", name: "LG LED TV 43형", model: "43LM6370KNA", price: 490000, badges: [], category: "tv", subCategory: "led", rating: 4.0, reviewCount: 678 },
-  { id: "tv-21", name: "LG LED TV 32형", model: "32LM6370KNA", price: 290000, badges: ["인기"], category: "tv", subCategory: "led", rating: 4.1, reviewCount: 1023 },
+  { id: "tv-20", name: "LG LED TV 43형", model: "43LM6370KNA", imageUrl: "https://www.lge.co.kr/kr/images/tvs/md08989826/md08989826-280x280.jpg", price: 490000, badges: [], category: "tv", subCategory: "led", rating: 4.0, reviewCount: 678 },
+  { id: "tv-21", name: "LG LED TV 32형", model: "32LM6370KNA", imageUrl: "https://www.lge.co.kr/kr/images/tvs/md10272836/md10272836-280x280.jpg", price: 290000, badges: ["인기"], category: "tv", subCategory: "led", rating: 4.1, reviewCount: 1023 },
 
   // TV - 라이프스타일 스크린
   { id: "tv-22", name: "LG 라이프스타일 스크린 55형", model: "55LS9900KNA", price: 3290000, badges: ["신제품"], category: "tv", subCategory: "lifestyle", rating: 4.7, reviewCount: 34 },
 
   // 스탠바이미
-  { id: "sbm-1", name: "LG 스탠바이미 2 27형", model: "27ART20QEKR", price: 1090000, badges: ["인기"], category: "standbyme", rating: 4.6, reviewCount: 892, colors: ["베이지", "그레이"], features: ["터치스크린", "무선 이동", "배터리 내장"] },
-  { id: "sbm-2", name: "LG 스탠바이미 Go 27형", model: "27LX5QKNA", price: 1190000, badges: ["닷컴 ONLY"], category: "standbyme", rating: 4.7, reviewCount: 456, colors: ["베이지"], features: ["캐리어 디자인", "풀 HD", "터치스크린"] },
+  { id: "sbm-1", name: "LG 스탠바이미 2 27형", model: "27ART20QEKR", imageUrl: "https://www.lge.co.kr/kr/images/stan-by-me/md10519833/md10519833-280x280.jpg", price: 1090000, badges: ["인기"], category: "standbyme", rating: 4.6, reviewCount: 892, colors: ["베이지", "그레이"], features: ["터치스크린", "무선 이동", "배터리 내장"] },
+  { id: "sbm-2", name: "LG 스탠바이미 Go 27형", model: "27LX5QKNA", imageUrl: "https://www.lge.co.kr/kr/images/stan-by-me/md10009827/md10009827-280x280.jpg", price: 1190000, badges: ["닷컴 ONLY"], category: "standbyme", rating: 4.7, reviewCount: 456, colors: ["베이지"], features: ["캐리어 디자인", "풀 HD", "터치스크린"] },
   { id: "sbm-3", name: "LG 스탠바이미 Pro 32형", model: "32ART20QEKR", price: 1590000, badges: ["신제품"], category: "standbyme", rating: 4.8, reviewCount: 67, colors: ["그레이"] },
 
   // 프로젝터
@@ -274,17 +275,17 @@ const PRODUCTS: Product[] = [
 
   // ═══════════════ PC/모니터 ═══════════════
   // 노트북
-  { id: "nb-1", name: "LG 그램 Pro 16 AI 2026", model: "16Z95U-GS5WK", price: 2490000, badges: ["닷컴 ONLY", "신제품"], category: "notebook", subCategory: "gram-pro", rating: 4.7, reviewCount: 234, colors: ["화이트", "블랙"], features: ["OLED 디스플레이", "Intel Core Ultra", "AI 기능"] },
-  { id: "nb-2", name: "LG 그램 Pro 16 AI", model: "16Z95U-GD50K", price: 2190000, badges: [], category: "notebook", subCategory: "gram-pro", rating: 4.6, reviewCount: 456 },
-  { id: "nb-3", name: "LG 그램 Pro 14 AI", model: "14Z95U-GS3WK", price: 1990000, badges: ["인기"], category: "notebook", subCategory: "gram-pro", rating: 4.6, reviewCount: 312, colors: ["화이트"] },
-  { id: "nb-4", name: "LG 그램 Pro 360 16형", model: "16T95U-GD50K", price: 2190000, badges: ["신제품"], category: "notebook", subCategory: "gram-pro-360", rating: 4.5, reviewCount: 89, features: ["360도 회전", "터치스크린", "S Pen"] },
-  { id: "nb-5", name: "LG 그램 Pro 360 14형", model: "14T95U-GD50K", price: 1890000, badges: [], category: "notebook", subCategory: "gram-pro-360", rating: 4.5, reviewCount: 123 },
-  { id: "nb-6", name: "LG 그램 17", model: "17Z90S-GD5CK", price: 1690000, badges: [], category: "notebook", subCategory: "gram", rating: 4.5, reviewCount: 567 },
-  { id: "nb-7", name: "LG 그램 16", model: "16Z90S-GD5CK", price: 1490000, badges: ["인기"], category: "notebook", subCategory: "gram", rating: 4.4, reviewCount: 789, colors: ["화이트", "차콜"] },
-  { id: "nb-8", name: "LG 그램 15", model: "15Z90S-GD5CK", price: 1290000, badges: [], category: "notebook", subCategory: "gram", rating: 4.3, reviewCount: 345 },
-  { id: "nb-9", name: "LG 그램 14", model: "14Z90S-GD5CK", price: 1190000, badges: [], category: "notebook", subCategory: "gram", rating: 4.4, reviewCount: 456 },
-  { id: "nb-10", name: "LG 그램북 14", model: "14Z90RS-GD3FK", price: 990000, badges: ["인기"], category: "notebook", subCategory: "grambook", rating: 4.3, reviewCount: 678, colors: ["화이트"] },
-  { id: "nb-11", name: "LG 그램북 15", model: "15Z90RS-GD3FK", price: 1090000, badges: [], category: "notebook", subCategory: "grambook", rating: 4.2, reviewCount: 234 },
+  { id: "nb-1", name: "LG 그램 Pro 16 AI 2026", model: "16Z95U-GS5WK", imageUrl: "https://www.lge.co.kr/kr/images/notebook/md10744830/md10744830-280x280.jpg", price: 2490000, badges: ["닷컴 ONLY", "신제품"], category: "notebook", subCategory: "gram-pro", rating: 4.7, reviewCount: 234, colors: ["화이트", "블랙"], features: ["OLED 디스플레이", "Intel Core Ultra", "AI 기능"] },
+  { id: "nb-2", name: "LG 그램 Pro 16 AI", model: "16Z95U-GD50K", imageUrl: "https://www.lge.co.kr/kr/images/notebook/md10744830/md10744830-280x280.jpg", price: 2190000, badges: [], category: "notebook", subCategory: "gram-pro", rating: 4.6, reviewCount: 456 },
+  { id: "nb-3", name: "LG 그램 Pro 14 AI", model: "14Z95U-GS3WK", imageUrl: "https://www.lge.co.kr/kr/images/notebook/md10748845/md10748845-280x280.jpg", price: 1990000, badges: ["인기"], category: "notebook", subCategory: "gram-pro", rating: 4.6, reviewCount: 312, colors: ["화이트"] },
+  { id: "nb-4", name: "LG 그램 Pro 360 16형", model: "16T95U-GD50K", imageUrl: "https://www.lge.co.kr/kr/images/notebook/md10740837/md10740837-280x280.jpg", price: 2190000, badges: ["신제품"], category: "notebook", subCategory: "gram-pro-360", rating: 4.5, reviewCount: 89, features: ["360도 회전", "터치스크린", "S Pen"] },
+  { id: "nb-5", name: "LG 그램 Pro 360 14형", model: "14T95U-GD50K", imageUrl: "https://www.lge.co.kr/kr/images/notebook/md10521834/md10521834-280x280.jpg", price: 1890000, badges: [], category: "notebook", subCategory: "gram-pro-360", rating: 4.5, reviewCount: 123 },
+  { id: "nb-6", name: "LG 그램 17", model: "17Z90S-GD5CK", imageUrl: "https://www.lge.co.kr/kr/images/notebook/md09877833/md09877833-280x280.jpg", price: 1690000, badges: [], category: "notebook", subCategory: "gram", rating: 4.5, reviewCount: 567 },
+  { id: "nb-7", name: "LG 그램 16", model: "16Z90S-GD5CK", imageUrl: "https://www.lge.co.kr/kr/images/notebook/md10279831/md10279831-280x280.jpg", price: 1490000, badges: ["인기"], category: "notebook", subCategory: "gram", rating: 4.4, reviewCount: 789, colors: ["화이트", "차콜"] },
+  { id: "nb-8", name: "LG 그램 15", model: "15Z90S-GD5CK", imageUrl: "https://www.lge.co.kr/kr/images/notebook/md10285826/md10285826-280x280.jpg", price: 1290000, badges: [], category: "notebook", subCategory: "gram", rating: 4.3, reviewCount: 345 },
+  { id: "nb-9", name: "LG 그램 14", model: "14Z90S-GD5CK", imageUrl: "https://www.lge.co.kr/kr/images/notebook/md10286830/md10286830-280x280.jpg", price: 1190000, badges: [], category: "notebook", subCategory: "gram", rating: 4.4, reviewCount: 456 },
+  { id: "nb-10", name: "LG 그램북 14", model: "14Z90RS-GD3FK", imageUrl: "https://www.lge.co.kr/kr/images/notebook/md10286830/md10286830-280x280.jpg", price: 990000, badges: ["인기"], category: "notebook", subCategory: "grambook", rating: 4.3, reviewCount: 678, colors: ["화이트"] },
+  { id: "nb-11", name: "LG 그램북 15", model: "15Z90RS-GD3FK", imageUrl: "https://www.lge.co.kr/kr/images/notebook/md10285826/md10285826-280x280.jpg", price: 1090000, badges: [], category: "notebook", subCategory: "grambook", rating: 4.2, reviewCount: 234 },
 
   // 일체형/데스크톱
   { id: "dt-1", name: "LG 일체형 PC 27형", model: "27V70S-G.AKR", price: 1590000, badges: ["인기"], category: "desktop", subCategory: "aio", rating: 4.3, reviewCount: 123 },
@@ -293,64 +294,64 @@ const PRODUCTS: Product[] = [
 
   // 모니터
   { id: "mn-1", name: "LG 울트라기어 OLED 27형", model: "27GS95QE", price: 1290000, badges: ["인기"], category: "monitor", subCategory: "oled-gaming", rating: 4.8, reviewCount: 567, features: ["240Hz", "0.03ms", "OLED"] },
-  { id: "mn-2", name: "LG 울트라기어 OLED 32형", model: "32GS95UE", price: 1590000, badges: ["신제품"], category: "monitor", subCategory: "oled-gaming", rating: 4.9, reviewCount: 123 },
+  { id: "mn-2", name: "LG 울트라기어 OLED 32형", model: "32GS95UE", imageUrl: "https://www.lge.co.kr/kr/images/monitors/md10531829/md10531829-280x280.jpg", price: 1590000, badges: ["신제품"], category: "monitor", subCategory: "oled-gaming", rating: 4.9, reviewCount: 123 },
   { id: "mn-3", name: "LG 울트라기어 OLED 45형 커브드", model: "45GS95QE", price: 2290000, badges: ["닷컴 ONLY"], category: "monitor", subCategory: "oled-gaming", rating: 4.7, reviewCount: 89, features: ["800R 커브드", "240Hz"] },
   { id: "mn-4", name: "LG 울트라기어 32형 QHD", model: "32GN650-B", price: 490000, badges: [], category: "monitor", subCategory: "gaming", rating: 4.4, reviewCount: 1234 },
   { id: "mn-5", name: "LG 울트라기어 27형 FHD", model: "27GN650-B", price: 290000, badges: ["인기"], category: "monitor", subCategory: "gaming", rating: 4.3, reviewCount: 2345 },
-  { id: "mn-6", name: "LG 스마트모니터 32형 4K", model: "32SQ780S", price: 690000, badges: [], category: "monitor", subCategory: "smart", rating: 4.5, reviewCount: 345, features: ["webOS", "에르고 스탠드"] },
-  { id: "mn-7", name: "LG 스마트모니터 27형", model: "27SQ780S", price: 490000, badges: [], category: "monitor", subCategory: "smart", rating: 4.4, reviewCount: 234 },
+  { id: "mn-6", name: "LG 스마트모니터 32형 4K", model: "32SQ780S", imageUrl: "https://www.lge.co.kr/kr/images/monitors/md10491828/md10491828-280x280.jpg", price: 690000, badges: [], category: "monitor", subCategory: "smart", rating: 4.5, reviewCount: 345, features: ["webOS", "에르고 스탠드"] },
+  { id: "mn-7", name: "LG 스마트모니터 27형", model: "27SQ780S", imageUrl: "https://www.lge.co.kr/kr/images/monitors/md10491828/md10491828-280x280.jpg", price: 490000, badges: [], category: "monitor", subCategory: "smart", rating: 4.4, reviewCount: 234 },
   { id: "mn-8", name: "LG 울트라파인 evo 32형 OLED", model: "32EP950", price: 2990000, badges: [], category: "monitor", subCategory: "ultrafine", rating: 4.8, reviewCount: 56, features: ["OLED", "DCI-P3 99%"] },
-  { id: "mn-9", name: "LG UHD 모니터 32형", model: "32UN880-B", price: 590000, badges: ["인기"], category: "monitor", subCategory: "uhd", rating: 4.4, reviewCount: 678 },
-  { id: "mn-10", name: "LG UHD 모니터 27형", model: "27UN880-B", price: 490000, badges: [], category: "monitor", subCategory: "uhd", rating: 4.3, reviewCount: 891 },
-  { id: "mn-11", name: "LG 울트라와이드 34형", model: "34WP65G-B", price: 490000, badges: [], category: "monitor", subCategory: "wide", rating: 4.4, reviewCount: 567 },
-  { id: "mn-12", name: "LG 울트라와이드 49형", model: "49WQ95C-W", price: 1790000, badges: ["신제품"], category: "monitor", subCategory: "wide", rating: 4.6, reviewCount: 34 },
+  { id: "mn-9", name: "LG UHD 모니터 32형", model: "32UN880-B", imageUrl: "https://www.lge.co.kr/kr/images/monitors/md10517830/md10517830-280x280.jpg", price: 590000, badges: ["인기"], category: "monitor", subCategory: "uhd", rating: 4.4, reviewCount: 678 },
+  { id: "mn-10", name: "LG UHD 모니터 27형", model: "27UN880-B", imageUrl: "https://www.lge.co.kr/kr/images/monitors/md10517830/md10517830-280x280.jpg", price: 490000, badges: [], category: "monitor", subCategory: "uhd", rating: 4.3, reviewCount: 891 },
+  { id: "mn-11", name: "LG 울트라와이드 34형", model: "34WP65G-B", imageUrl: "https://www.lge.co.kr/kr/images/monitors/md10674827/md10674827-280x280.jpg", price: 490000, badges: [], category: "monitor", subCategory: "wide", rating: 4.4, reviewCount: 567 },
+  { id: "mn-12", name: "LG 울트라와이드 49형", model: "49WQ95C-W", imageUrl: "https://www.lge.co.kr/kr/images/monitors/md10674827/md10674827-280x280.jpg", price: 1790000, badges: ["신제품"], category: "monitor", subCategory: "wide", rating: 4.6, reviewCount: 34 },
 
   // ═══════════════ 주방가전 ═══════════════
   // 냉장고
-  { id: "rf-1", name: "LG 디오스 오브제컬렉션 냉장고 832L", model: "M874GBB551", price: 3290000, badges: ["인기"], category: "refrigerator", subCategory: "top-bottom", rating: 4.7, reviewCount: 456, colors: ["베이지+베이지", "그레이+화이트", "그린+베이지"], features: ["매직스페이스", "컨버터블"] },
-  { id: "rf-2", name: "LG 디오스 오브제컬렉션 냉장고 710L", model: "M711GBB551", price: 2790000, badges: [], category: "refrigerator", subCategory: "top-bottom", rating: 4.6, reviewCount: 234, colors: ["베이지+베이지"] },
-  { id: "rf-3", name: "LG 디오스 양문형 냉장고 821L", model: "S833SS30", price: 1590000, badges: [], category: "refrigerator", subCategory: "side-by-side", rating: 4.4, reviewCount: 567 },
-  { id: "rf-4", name: "LG 디오스 양문형 냉장고 636L", model: "S631SS35Q", price: 1290000, badges: ["인기"], category: "refrigerator", subCategory: "side-by-side", rating: 4.3, reviewCount: 789 },
-  { id: "rf-5", name: "LG STEM 냉장고 870L", model: "T873MGB112", price: 4290000, badges: ["신제품"], category: "refrigerator", subCategory: "stem", rating: 4.8, reviewCount: 45, features: ["LG STEM", "오브제컬렉션"] },
-  { id: "rf-6", name: "LG STEM 냉장고 640L", model: "T643MEE112", price: 3590000, badges: [], category: "refrigerator", subCategory: "stem", rating: 4.7, reviewCount: 67 },
-  { id: "rf-7", name: "LG 일반형 냉장고 507L", model: "B502W33", price: 890000, badges: [], category: "refrigerator", subCategory: "standard", rating: 4.2, reviewCount: 345 },
-  { id: "rf-8", name: "LG 일반형 냉장고 462L", model: "B462W33", price: 790000, badges: [], category: "refrigerator", subCategory: "standard", rating: 4.1, reviewCount: 456 },
+  { id: "rf-1", name: "LG 디오스 오브제컬렉션 냉장고 832L", model: "M874GBB551", imageUrl: "https://www.lge.co.kr/kr/images/refrigerators/md10635830/md10635830-280x280.jpg", price: 3290000, badges: ["인기"], category: "refrigerator", subCategory: "top-bottom", rating: 4.7, reviewCount: 456, colors: ["베이지+베이지", "그레이+화이트", "그린+베이지"], features: ["매직스페이스", "컨버터블"] },
+  { id: "rf-2", name: "LG 디오스 오브제컬렉션 냉장고 710L", model: "M711GBB551", imageUrl: "https://www.lge.co.kr/kr/images/refrigerators/md10635830/md10635830-280x280.jpg", price: 2790000, badges: [], category: "refrigerator", subCategory: "top-bottom", rating: 4.6, reviewCount: 234, colors: ["베이지+베이지"] },
+  { id: "rf-3", name: "LG 디오스 양문형 냉장고 821L", model: "S833SS30", imageUrl: "https://www.lge.co.kr/kr/images/refrigerators/md10635830/md10635830-280x280.jpg", price: 1590000, badges: [], category: "refrigerator", subCategory: "side-by-side", rating: 4.4, reviewCount: 567 },
+  { id: "rf-4", name: "LG 디오스 양문형 냉장고 636L", model: "S631SS35Q", imageUrl: "https://www.lge.co.kr/kr/images/refrigerators/md10635830/md10635830-280x280.jpg", price: 1290000, badges: ["인기"], category: "refrigerator", subCategory: "side-by-side", rating: 4.3, reviewCount: 789 },
+  { id: "rf-5", name: "LG STEM 냉장고 870L", model: "T873MGB112", imageUrl: "https://www.lge.co.kr/kr/images/refrigerators/md09322826/md09322826-280x280.jpg", price: 4290000, badges: ["신제품"], category: "refrigerator", subCategory: "stem", rating: 4.8, reviewCount: 45, features: ["LG STEM", "오브제컬렉션"] },
+  { id: "rf-6", name: "LG STEM 냉장고 640L", model: "T643MEE112", imageUrl: "https://www.lge.co.kr/kr/images/refrigerators/md09322826/md09322826-280x280.jpg", price: 3590000, badges: [], category: "refrigerator", subCategory: "stem", rating: 4.7, reviewCount: 67 },
+  { id: "rf-7", name: "LG 일반형 냉장고 507L", model: "B502W33", imageUrl: "https://www.lge.co.kr/kr/images/refrigerators/md10635830/md10635830-280x280.jpg", price: 890000, badges: [], category: "refrigerator", subCategory: "standard", rating: 4.2, reviewCount: 345 },
+  { id: "rf-8", name: "LG 일반형 냉장고 462L", model: "B462W33", imageUrl: "https://www.lge.co.kr/kr/images/refrigerators/md10635830/md10635830-280x280.jpg", price: 790000, badges: [], category: "refrigerator", subCategory: "standard", rating: 4.1, reviewCount: 456 },
 
   // 컨버터블 패키지
-  { id: "cv-1", name: "LG 컨버터블 냉장전용고 380L", model: "Y380GBB", price: 1490000, badges: ["인기"], category: "convertible", subCategory: "fridge", rating: 4.5, reviewCount: 123, colors: ["베이지"] },
-  { id: "cv-2", name: "LG 컨버터블 냉동전용고 321L", model: "Y321GBB", price: 1290000, badges: [], category: "convertible", subCategory: "freezer", rating: 4.4, reviewCount: 89 },
-  { id: "cv-3", name: "LG 컨버터블 김치냉장고 324L", model: "Y324GBB", price: 1190000, badges: [], category: "convertible", subCategory: "kimchi", rating: 4.3, reviewCount: 67 },
+  { id: "cv-1", name: "LG 컨버터블 냉장전용고 380L", model: "Y380GBB", imageUrl: "https://www.lge.co.kr/kr/images/refrigerators/md10635830/md10635830-280x280.jpg", price: 1490000, badges: ["인기"], category: "convertible", subCategory: "fridge", rating: 4.5, reviewCount: 123, colors: ["베이지"] },
+  { id: "cv-2", name: "LG 컨버터블 냉동전용고 321L", model: "Y321GBB", imageUrl: "https://www.lge.co.kr/kr/images/refrigerators/md10635830/md10635830-280x280.jpg", price: 1290000, badges: [], category: "convertible", subCategory: "freezer", rating: 4.4, reviewCount: 89 },
+  { id: "cv-3", name: "LG 컨버터블 김치냉장고 324L", model: "Y324GBB", imageUrl: "https://www.lge.co.kr/kr/images/kimchi-refrigerators/md10559863/md10559863-280x280.jpg", price: 1190000, badges: [], category: "convertible", subCategory: "kimchi", rating: 4.3, reviewCount: 67 },
 
   // 김치냉장고
-  { id: "km-1", name: "LG 디오스 오브제컬렉션 김치냉장고 스탠드형 407L", model: "Z407GBB161", price: 1890000, badges: ["인기"], category: "kimchi", subCategory: "stand", rating: 4.6, reviewCount: 234, colors: ["베이지"] },
-  { id: "km-2", name: "LG 디오스 오브제컬렉션 김치냉장고 스탠드형 324L", model: "Z324GBB161", price: 1590000, badges: [], category: "kimchi", subCategory: "stand", rating: 4.5, reviewCount: 123 },
-  { id: "km-3", name: "LG 디오스 김치냉장고 뚜껑형 219L", model: "K228LW13E", price: 890000, badges: [], category: "kimchi", subCategory: "top-open", rating: 4.3, reviewCount: 345 },
+  { id: "km-1", name: "LG 디오스 오브제컬렉션 김치냉장고 스탠드형 407L", model: "Z407GBB161", imageUrl: "https://www.lge.co.kr/kr/images/kimchi-refrigerators/md10559863/md10559863-280x280.jpg", price: 1890000, badges: ["인기"], category: "kimchi", subCategory: "stand", rating: 4.6, reviewCount: 234, colors: ["베이지"] },
+  { id: "km-2", name: "LG 디오스 오브제컬렉션 김치냉장고 스탠드형 324L", model: "Z324GBB161", imageUrl: "https://www.lge.co.kr/kr/images/kimchi-refrigerators/md10559863/md10559863-280x280.jpg", price: 1590000, badges: [], category: "kimchi", subCategory: "stand", rating: 4.5, reviewCount: 123 },
+  { id: "km-3", name: "LG 디오스 김치냉장고 뚜껑형 219L", model: "K228LW13E", imageUrl: "https://www.lge.co.kr/kr/images/kimchi-refrigerators/md10559863/md10559863-280x280.jpg", price: 890000, badges: [], category: "kimchi", subCategory: "top-open", rating: 4.3, reviewCount: 345 },
 
   // 와인셀러
   { id: "wc-1", name: "LG 디오스 와인셀러 71병", model: "W715S", price: 2290000, badges: [], category: "wine-cellar", rating: 4.5, reviewCount: 45 },
   { id: "wc-2", name: "LG 디오스 와인셀러 43병", model: "W435S", price: 1490000, badges: ["인기"], category: "wine-cellar", rating: 4.4, reviewCount: 89 },
 
   // 전기레인지
-  { id: "rg-1", name: "LG 디오스 인덕션 3구", model: "BEI3GSTR", price: 1590000, badges: [], category: "range", subCategory: "induction", rating: 4.5, reviewCount: 234 },
-  { id: "rg-2", name: "LG 디오스 인덕션 2구", model: "BEI2GSTR", price: 990000, badges: ["인기"], category: "range", subCategory: "induction", rating: 4.4, reviewCount: 456 },
-  { id: "rg-3", name: "LG 디오스 하이브리드 전기레인지", model: "BEH3GTR", price: 1290000, badges: [], category: "range", subCategory: "hybrid", rating: 4.3, reviewCount: 123 },
+  { id: "rg-1", name: "LG 디오스 인덕션 3구", model: "BEI3GSTR", imageUrl: "https://www.lge.co.kr/kr/images/electric-ranges/md10372843/md10372843-280x280.jpg", price: 1590000, badges: [], category: "range", subCategory: "induction", rating: 4.5, reviewCount: 234 },
+  { id: "rg-2", name: "LG 디오스 인덕션 2구", model: "BEI2GSTR", imageUrl: "https://www.lge.co.kr/kr/images/electric-ranges/md10372843/md10372843-280x280.jpg", price: 990000, badges: ["인기"], category: "range", subCategory: "induction", rating: 4.4, reviewCount: 456 },
+  { id: "rg-3", name: "LG 디오스 하이브리드 전기레인지", model: "BEH3GTR", imageUrl: "https://www.lge.co.kr/kr/images/electric-ranges/md10336830/md10336830-280x280.jpg", price: 1290000, badges: [], category: "range", subCategory: "hybrid", rating: 4.3, reviewCount: 123 },
 
   // 식기세척기
-  { id: "dw-1", name: "LG 디오스 오브제컬렉션 식기세척기 14인용", model: "DFB41P", price: 1290000, badges: ["인기"], category: "dishwasher", subCategory: "14", rating: 4.6, reviewCount: 678, colors: ["베이지", "그레이"] },
-  { id: "dw-2", name: "LG 디오스 식기세척기 14인용", model: "DFB22SA", price: 990000, badges: [], category: "dishwasher", subCategory: "14", rating: 4.4, reviewCount: 456 },
-  { id: "dw-3", name: "LG 디오스 오브제컬렉션 식기세척기 12인용", model: "DFB22GA", price: 890000, badges: [], category: "dishwasher", subCategory: "12", rating: 4.5, reviewCount: 345 },
+  { id: "dw-1", name: "LG 디오스 오브제컬렉션 식기세척기 14인용", model: "DFB41P", imageUrl: "https://www.lge.co.kr/kr/images/dishwashers/md10492836/md10492836-280x280.jpg", price: 1290000, badges: ["인기"], category: "dishwasher", subCategory: "14", rating: 4.6, reviewCount: 678, colors: ["베이지", "그레이"] },
+  { id: "dw-2", name: "LG 디오스 식기세척기 14인용", model: "DFB22SA", imageUrl: "https://www.lge.co.kr/kr/images/dishwashers/md10492836/md10492836-280x280.jpg", price: 990000, badges: [], category: "dishwasher", subCategory: "14", rating: 4.4, reviewCount: 456 },
+  { id: "dw-3", name: "LG 디오스 오브제컬렉션 식기세척기 12인용", model: "DFB22GA", imageUrl: "https://www.lge.co.kr/kr/images/dishwashers/md10492836/md10492836-280x280.jpg", price: 890000, badges: [], category: "dishwasher", subCategory: "12", rating: 4.5, reviewCount: 345 },
 
   // 광파오븐/전자레인지
-  { id: "ov-1", name: "LG 디오스 광파오븐 39L", model: "ML39WN", price: 390000, badges: ["인기"], category: "oven", subCategory: "lightwave", rating: 4.4, reviewCount: 567 },
-  { id: "ov-2", name: "LG 디오스 광파오븐 32L", model: "ML32WN", price: 290000, badges: [], category: "oven", subCategory: "lightwave", rating: 4.3, reviewCount: 789 },
-  { id: "ov-3", name: "LG 전자레인지 23L", model: "MW23ND", price: 149000, badges: [], category: "oven", subCategory: "microwave", rating: 4.1, reviewCount: 1234 },
-  { id: "ov-4", name: "LG 전자레인지 26L", model: "MW26ND", price: 179000, badges: [], category: "oven", subCategory: "microwave", rating: 4.2, reviewCount: 890 },
+  { id: "ov-1", name: "LG 디오스 광파오븐 39L", model: "ML39WN", imageUrl: "https://www.lge.co.kr/kr/images/microwaves-and-ovens/md09878834/md09878834-280x280.jpg", price: 390000, badges: ["인기"], category: "oven", subCategory: "lightwave", rating: 4.4, reviewCount: 567 },
+  { id: "ov-2", name: "LG 디오스 광파오븐 32L", model: "ML32WN", imageUrl: "https://www.lge.co.kr/kr/images/microwaves-and-ovens/md08044721/md08044721-280x280.jpg", price: 290000, badges: [], category: "oven", subCategory: "lightwave", rating: 4.3, reviewCount: 789 },
+  { id: "ov-3", name: "LG 전자레인지 23L", model: "MW23ND", imageUrl: "https://www.lge.co.kr/kr/images/microwaves-and-ovens/md10101826/md10101826-280x280.jpg", price: 149000, badges: [], category: "oven", subCategory: "microwave", rating: 4.1, reviewCount: 1234 },
+  { id: "ov-4", name: "LG 전자레인지 26L", model: "MW26ND", imageUrl: "https://www.lge.co.kr/kr/images/microwaves-and-ovens/md10101826/md10101826-280x280.jpg", price: 179000, badges: [], category: "oven", subCategory: "microwave", rating: 4.2, reviewCount: 890 },
 
   // 정수기
-  { id: "wp-1", name: "LG 퓨리케어 오브제컬렉션 얼음정수기", model: "WD523ACS", price: 1890000, badges: ["인기"], category: "water-purifier", subCategory: "ice", rating: 4.7, reviewCount: 234, colors: ["베이지", "그레이"], features: ["자가관리", "UV 살균"] },
-  { id: "wp-2", name: "LG 퓨리케어 냉온정수기", model: "WD503AW", price: 690000, badges: [], category: "water-purifier", subCategory: "hot-cold", rating: 4.5, reviewCount: 456 },
-  { id: "wp-3", name: "LG 퓨리케어 냉정수기", model: "WD305AW", price: 490000, badges: [], category: "water-purifier", subCategory: "cold", rating: 4.3, reviewCount: 567 },
-  { id: "wp-4", name: "LG 퓨리케어 정수전용", model: "WD101AW", price: 290000, badges: [], category: "water-purifier", subCategory: "purify", rating: 4.2, reviewCount: 678 },
+  { id: "wp-1", name: "LG 퓨리케어 오브제컬렉션 얼음정수기", model: "WD523ACS", imageUrl: "https://www.lge.co.kr/kr/images/water-purifiers/md10597839/md10597839-280x280.jpg", price: 1890000, badges: ["인기"], category: "water-purifier", subCategory: "ice", rating: 4.7, reviewCount: 234, colors: ["베이지", "그레이"], features: ["자가관리", "UV 살균"] },
+  { id: "wp-2", name: "LG 퓨리케어 냉온정수기", model: "WD503AW", imageUrl: "https://www.lge.co.kr/kr/images/water-purifiers/md10597839/md10597839-280x280.jpg", price: 690000, badges: [], category: "water-purifier", subCategory: "hot-cold", rating: 4.5, reviewCount: 456 },
+  { id: "wp-3", name: "LG 퓨리케어 냉정수기", model: "WD305AW", imageUrl: "https://www.lge.co.kr/kr/images/water-purifiers/md10597839/md10597839-280x280.jpg", price: 490000, badges: [], category: "water-purifier", subCategory: "cold", rating: 4.3, reviewCount: 567 },
+  { id: "wp-4", name: "LG 퓨리케어 정수전용", model: "WD101AW", imageUrl: "https://www.lge.co.kr/kr/images/water-purifiers/md10222841/md10222841-280x280.jpg", price: 290000, badges: [], category: "water-purifier", subCategory: "purify", rating: 4.2, reviewCount: 678 },
 
   // 맥주제조기
   { id: "br-1", name: "LG 홈브루 맥주제조기", model: "BB052S", price: 590000, badges: [], category: "beer", rating: 4.3, reviewCount: 234 },
@@ -360,71 +361,71 @@ const PRODUCTS: Product[] = [
 
   // ═══════════════ 생활가전 ═══════════════
   // 워시타워
-  { id: "wt-1", name: "LG 트롬 오브제컬렉션 워시타워", model: "W20WAN", price: 2690000, badges: ["인기"], category: "washtower", subCategory: "standard", rating: 4.7, reviewCount: 456, colors: ["베이지", "그린"], features: ["세탁 25kg", "건조 20kg"] },
-  { id: "wt-2", name: "LG 트롬 오브제컬렉션 워시타워 컴팩트", model: "W16WAH", price: 2290000, badges: [], category: "washtower", subCategory: "standard", rating: 4.6, reviewCount: 234, colors: ["베이지"] },
+  { id: "wt-1", name: "LG 트롬 오브제컬렉션 워시타워", model: "W20WAN", imageUrl: "https://www.lge.co.kr/kr/images/wash-tower/md09155834/md09155834-280x280.jpg", price: 2690000, badges: ["인기"], category: "washtower", subCategory: "standard", rating: 4.7, reviewCount: 456, colors: ["베이지", "그린"], features: ["세탁 25kg", "건조 20kg"] },
+  { id: "wt-2", name: "LG 트롬 오브제컬렉션 워시타워 컴팩트", model: "W16WAH", imageUrl: "https://www.lge.co.kr/kr/images/wash-tower/md09465826/md09465826-280x280.jpg", price: 2290000, badges: [], category: "washtower", subCategory: "standard", rating: 4.6, reviewCount: 234, colors: ["베이지"] },
 
   // 워시콤보
-  { id: "wc2-1", name: "LG 트롬 오브제컬렉션 워시콤보 25kg", model: "FH25VAN", price: 2390000, badges: ["신제품"], category: "washcombo", subCategory: "standard", rating: 4.6, reviewCount: 123, colors: ["베이지", "그레이"] },
+  { id: "wc2-1", name: "LG 트롬 오브제컬렉션 워시콤보 25kg", model: "FH25VAN", imageUrl: "https://www.lge.co.kr/kr/images/wash-combo/md10335845/md10335845-280x280.jpg", price: 2390000, badges: ["신제품"], category: "washcombo", subCategory: "standard", rating: 4.6, reviewCount: 123, colors: ["베이지", "그레이"] },
 
   // 세탁기
-  { id: "ws-1", name: "LG 트롬 드럼세탁기 25kg", model: "F25WDLP", price: 1490000, badges: ["인기"], category: "washer", subCategory: "drum", rating: 4.5, reviewCount: 567 },
-  { id: "ws-2", name: "LG 트롬 드럼세탁기 21kg", model: "F21WDLP", price: 1290000, badges: [], category: "washer", subCategory: "drum", rating: 4.4, reviewCount: 789 },
-  { id: "ws-3", name: "LG 트롬 드럼세탁기 17kg", model: "F17WDAP", price: 990000, badges: [], category: "washer", subCategory: "drum", rating: 4.3, reviewCount: 456 },
-  { id: "ws-4", name: "LG 통돌이 세탁기 19kg", model: "T19MX8", price: 790000, badges: ["인기"], category: "washer", subCategory: "top-load", rating: 4.3, reviewCount: 1234 },
-  { id: "ws-5", name: "LG 통돌이 세탁기 16kg", model: "T16MX8", price: 590000, badges: [], category: "washer", subCategory: "top-load", rating: 4.2, reviewCount: 891 },
-  { id: "ws-6", name: "LG 미니워시 4kg", model: "F4WC", price: 490000, badges: [], category: "washer", subCategory: "mini", rating: 4.1, reviewCount: 345 },
+  { id: "ws-1", name: "LG 트롬 드럼세탁기 25kg", model: "F25WDLP", imageUrl: "https://www.lge.co.kr/kr/images/washing-machines/md10596838/md10596838-280x280.jpg", price: 1490000, badges: ["인기"], category: "washer", subCategory: "drum", rating: 4.5, reviewCount: 567 },
+  { id: "ws-2", name: "LG 트롬 드럼세탁기 21kg", model: "F21WDLP", imageUrl: "https://www.lge.co.kr/kr/images/washing-machines/md09768828/md09768828-280x280.jpg", price: 1290000, badges: [], category: "washer", subCategory: "drum", rating: 4.4, reviewCount: 789 },
+  { id: "ws-3", name: "LG 트롬 드럼세탁기 17kg", model: "F17WDAP", imageUrl: "https://www.lge.co.kr/kr/images/washing-machines/md10596838/md10596838-280x280.jpg", price: 990000, badges: [], category: "washer", subCategory: "drum", rating: 4.3, reviewCount: 456 },
+  { id: "ws-4", name: "LG 통돌이 세탁기 19kg", model: "T19MX8", imageUrl: "https://www.lge.co.kr/kr/images/washing-machines/md09889842/md09889842-280x280.jpg", price: 790000, badges: ["인기"], category: "washer", subCategory: "top-load", rating: 4.3, reviewCount: 1234 },
+  { id: "ws-5", name: "LG 통돌이 세탁기 16kg", model: "T16MX8", imageUrl: "https://www.lge.co.kr/kr/images/washing-machines/md09889842/md09889842-280x280.jpg", price: 590000, badges: [], category: "washer", subCategory: "top-load", rating: 4.2, reviewCount: 891 },
+  { id: "ws-6", name: "LG 미니워시 4kg", model: "F4WC", imageUrl: "https://www.lge.co.kr/kr/images/washing-machines/md10629827/md10629827-280x280.jpg", price: 490000, badges: [], category: "washer", subCategory: "mini", rating: 4.1, reviewCount: 345 },
 
   // 의류건조기
-  { id: "dr-1", name: "LG 트롬 건조기 20kg", model: "RH20WAN", price: 1590000, badges: ["인기"], category: "dryer", subCategory: "standard", rating: 4.6, reviewCount: 345, colors: ["베이지"] },
-  { id: "dr-2", name: "LG 트롬 건조기 16kg", model: "RH16WTAN", price: 1290000, badges: [], category: "dryer", subCategory: "standard", rating: 4.5, reviewCount: 456 },
+  { id: "dr-1", name: "LG 트롬 건조기 20kg", model: "RH20WAN", imageUrl: "https://www.lge.co.kr/kr/images/dryers/md10369835/md10369835-280x280.jpg", price: 1590000, badges: ["인기"], category: "dryer", subCategory: "standard", rating: 4.6, reviewCount: 345, colors: ["베이지"] },
+  { id: "dr-2", name: "LG 트롬 건조기 16kg", model: "RH16WTAN", imageUrl: "https://www.lge.co.kr/kr/images/dryers/md10369835/md10369835-280x280.jpg", price: 1290000, badges: [], category: "dryer", subCategory: "standard", rating: 4.5, reviewCount: 456 },
 
   // 의류관리기
-  { id: "sc-1", name: "LG 스타일러 오브제컬렉션", model: "SC5MBR62B", price: 1690000, originalPrice: 1890000, badges: [], category: "clothing-care", subCategory: "styler", rating: 4.7, reviewCount: 234, colors: ["미스트 베이지", "미스트 그린"] },
-  { id: "sc-2", name: "LG 스타일러 블랙에디션", model: "S5BB", price: 1490000, badges: ["인기"], category: "clothing-care", subCategory: "styler", rating: 4.6, reviewCount: 456, colors: ["블랙"] },
-  { id: "sc-3", name: "LG 스타일러 슬림", model: "S3BF", price: 990000, badges: [], category: "clothing-care", subCategory: "styler", rating: 4.4, reviewCount: 567 },
+  { id: "sc-1", name: "LG 스타일러 오브제컬렉션", model: "SC5MBR62B", imageUrl: "https://www.lge.co.kr/kr/images/lg-styler/md10724835/md10724835-280x280.jpg", price: 1690000, originalPrice: 1890000, badges: [], category: "clothing-care", subCategory: "styler", rating: 4.7, reviewCount: 234, colors: ["미스트 베이지", "미스트 그린"] },
+  { id: "sc-2", name: "LG 스타일러 블랙에디션", model: "S5BB", imageUrl: "https://www.lge.co.kr/kr/images/lg-styler/md10724835/md10724835-280x280.jpg", price: 1490000, badges: ["인기"], category: "clothing-care", subCategory: "styler", rating: 4.6, reviewCount: 456, colors: ["블랙"] },
+  { id: "sc-3", name: "LG 스타일러 슬림", model: "S3BF", imageUrl: "https://www.lge.co.kr/kr/images/lg-styler/md10724835/md10724835-280x280.jpg", price: 990000, badges: [], category: "clothing-care", subCategory: "styler", rating: 4.4, reviewCount: 567 },
 
   // 신발관리기
-  { id: "sh-1", name: "LG 슈케이스 오브제컬렉션", model: "SC2MWHAN", price: 990000, badges: ["인기"], category: "shoe-care", subCategory: "shoecase", rating: 4.5, reviewCount: 234, colors: ["베이지"] },
-  { id: "sh-2", name: "LG 슈케어", model: "SCW1BFSTL", price: 490000, badges: [], category: "shoe-care", subCategory: "shoecare", rating: 4.3, reviewCount: 345 },
+  { id: "sh-1", name: "LG 슈케이스 오브제컬렉션", model: "SC2MWHAN", imageUrl: "https://www.lge.co.kr/kr/images/shoe-care/md10428829/md10428829-280x280.jpg", price: 990000, badges: ["인기"], category: "shoe-care", subCategory: "shoecase", rating: 4.5, reviewCount: 234, colors: ["베이지"] },
+  { id: "sh-2", name: "LG 슈케어", model: "SCW1BFSTL", imageUrl: "https://www.lge.co.kr/kr/images/shoe-care/md10428829/md10428829-280x280.jpg", price: 490000, badges: [], category: "shoe-care", subCategory: "shoecare", rating: 4.3, reviewCount: 345 },
 
   // 안마의자
-  { id: "mc-1", name: "LG 힐링미 안마의자 전신형", model: "MH70B", price: 4990000, badges: ["신제품"], category: "massage-chair", subCategory: "full", rating: 4.7, reviewCount: 45 },
-  { id: "mc-2", name: "LG 힐링미 안마의자 가구형", model: "MH50B", price: 2990000, badges: ["인기"], category: "massage-chair", subCategory: "furniture", rating: 4.6, reviewCount: 89, colors: ["브라운", "그레이"] },
+  { id: "mc-1", name: "LG 힐링미 안마의자 전신형", model: "MH70B", imageUrl: "https://www.lge.co.kr/kr/images/massage-chair/md10463831/md10463831-280x280.jpg", price: 4990000, badges: ["신제품"], category: "massage-chair", subCategory: "full", rating: 4.7, reviewCount: 45 },
+  { id: "mc-2", name: "LG 힐링미 안마의자 가구형", model: "MH50B", imageUrl: "https://www.lge.co.kr/kr/images/massage-chair/md10463831/md10463831-280x280.jpg", price: 2990000, badges: ["인기"], category: "massage-chair", subCategory: "furniture", rating: 4.6, reviewCount: 89, colors: ["브라운", "그레이"] },
 
   // 청소기
-  { id: "vc-1", name: "LG 코드제로 A9S 올인원타워", model: "A9571IA", price: 1290000, badges: ["인기"], category: "vacuum", subCategory: "cordless", rating: 4.7, reviewCount: 1234, features: ["올인원타워", "파워드라이브 무빙노즐"] },
-  { id: "vc-2", name: "LG 코드제로 A9 Air", model: "A9581AIA", price: 890000, badges: [], category: "vacuum", subCategory: "cordless", rating: 4.5, reviewCount: 567 },
-  { id: "vc-3", name: "LG 코드제로 A9 Air 라이트", model: "A9381AIA", price: 590000, badges: [], category: "vacuum", subCategory: "cordless", rating: 4.3, reviewCount: 789 },
-  { id: "vc-4", name: "LG 코드제로 로봇청소기 R5", model: "R580HKA", price: 1690000, badges: ["신제품"], category: "vacuum", subCategory: "robot", rating: 4.6, reviewCount: 234, features: ["AI 장애물 인식", "자동 물걸레"] },
-  { id: "vc-5", name: "LG 코드제로 로봇청소기 R3", model: "R380HKA", price: 990000, badges: ["인기"], category: "vacuum", subCategory: "robot", rating: 4.4, reviewCount: 567 },
-  { id: "vc-6", name: "LG 유선 청소기", model: "VC7420NHAB", price: 290000, badges: [], category: "vacuum", subCategory: "corded", rating: 4.1, reviewCount: 234 },
+  { id: "vc-1", name: "LG 코드제로 A9S 올인원타워", model: "A9571IA", imageUrl: "https://www.lge.co.kr/kr/images/vacuum-cleaners/md10756828/md10756828-280x280.jpg", price: 1290000, badges: ["인기"], category: "vacuum", subCategory: "cordless", rating: 4.7, reviewCount: 1234, features: ["올인원타워", "파워드라이브 무빙노즐"] },
+  { id: "vc-2", name: "LG 코드제로 A9 Air", model: "A9581AIA", imageUrl: "https://www.lge.co.kr/kr/images/vacuum-cleaners/md10756828/md10756828-280x280.jpg", price: 890000, badges: [], category: "vacuum", subCategory: "cordless", rating: 4.5, reviewCount: 567 },
+  { id: "vc-3", name: "LG 코드제로 A9 Air 라이트", model: "A9381AIA", imageUrl: "https://www.lge.co.kr/kr/images/vacuum-cleaners/md10756828/md10756828-280x280.jpg", price: 590000, badges: [], category: "vacuum", subCategory: "cordless", rating: 4.3, reviewCount: 789 },
+  { id: "vc-4", name: "LG 코드제로 로봇청소기 R5", model: "R580HKA", imageUrl: "https://www.lge.co.kr/kr/images/vacuum-cleaners/md10249826/md10249826-280x280.jpg", price: 1690000, badges: ["신제품"], category: "vacuum", subCategory: "robot", rating: 4.6, reviewCount: 234, features: ["AI 장애물 인식", "자동 물걸레"] },
+  { id: "vc-5", name: "LG 코드제로 로봇청소기 R3", model: "R380HKA", imageUrl: "https://www.lge.co.kr/kr/images/vacuum-cleaners/md10249826/md10249826-280x280.jpg", price: 990000, badges: ["인기"], category: "vacuum", subCategory: "robot", rating: 4.4, reviewCount: 567 },
+  { id: "vc-6", name: "LG 유선 청소기", model: "VC7420NHAB", imageUrl: "https://www.lge.co.kr/kr/images/vacuum-cleaners/md10014830/md10014830-280x280.jpg", price: 290000, badges: [], category: "vacuum", subCategory: "corded", rating: 4.1, reviewCount: 234 },
 
   // ═══════════════ 에어컨/에어케어 ═══════════════
   // 에어컨
-  { id: "ac-1", name: "LG 휘센 오브제컬렉션 2in1 에어컨", model: "FQ20HDKWB2", price: 3490000, badges: ["인기"], category: "aircon", subCategory: "2in1", rating: 4.6, reviewCount: 234, colors: ["베이지"], features: ["2in1", "에너지 1등급", "AI 쾌적"] },
-  { id: "ac-2", name: "LG 휘센 오브제컬렉션 스탠드 에어컨", model: "FQ18SDKWB1", price: 2490000, badges: [], category: "aircon", subCategory: "stand", rating: 4.5, reviewCount: 345 },
-  { id: "ac-3", name: "LG 휘센 벽걸이 에어컨 16평형", model: "SW16BDJWAS", price: 1290000, badges: [], category: "aircon", subCategory: "wall", rating: 4.4, reviewCount: 567 },
-  { id: "ac-4", name: "LG 휘센 벽걸이 에어컨 13평형", model: "SW13BDJWAS", price: 1090000, badges: ["인기"], category: "aircon", subCategory: "wall", rating: 4.3, reviewCount: 891 },
-  { id: "ac-5", name: "LG 휘센 벽걸이 에어컨 7평형", model: "SW07BDJWAS", price: 790000, badges: [], category: "aircon", subCategory: "wall", rating: 4.2, reviewCount: 456 },
-  { id: "ac-6", name: "LG 휘센 이동식 에어컨", model: "PQ08DAWBS", price: 490000, badges: [], category: "aircon", subCategory: "portable", rating: 4.0, reviewCount: 789 },
+  { id: "ac-1", name: "LG 휘센 오브제컬렉션 2in1 에어컨", model: "FQ20HDKWB2", imageUrl: "https://www.lge.co.kr/kr/images/air-conditioners/md10561834/md10561834-280x280.jpg", price: 3490000, badges: ["인기"], category: "aircon", subCategory: "2in1", rating: 4.6, reviewCount: 234, colors: ["베이지"], features: ["2in1", "에너지 1등급", "AI 쾌적"] },
+  { id: "ac-2", name: "LG 휘센 오브제컬렉션 스탠드 에어컨", model: "FQ18SDKWB1", imageUrl: "https://www.lge.co.kr/kr/images/air-conditioners/md10561834/md10561834-280x280.jpg", price: 2490000, badges: [], category: "aircon", subCategory: "stand", rating: 4.5, reviewCount: 345 },
+  { id: "ac-3", name: "LG 휘센 벽걸이 에어컨 16평형", model: "SW16BDJWAS", imageUrl: "https://www.lge.co.kr/kr/images/air-conditioners/md10333826/md10333826-280x280.jpg", price: 1290000, badges: [], category: "aircon", subCategory: "wall", rating: 4.4, reviewCount: 567 },
+  { id: "ac-4", name: "LG 휘센 벽걸이 에어컨 13평형", model: "SW13BDJWAS", imageUrl: "https://www.lge.co.kr/kr/images/air-conditioners/md10333826/md10333826-280x280.jpg", price: 1090000, badges: ["인기"], category: "aircon", subCategory: "wall", rating: 4.3, reviewCount: 891 },
+  { id: "ac-5", name: "LG 휘센 벽걸이 에어컨 7평형", model: "SW07BDJWAS", imageUrl: "https://www.lge.co.kr/kr/images/air-conditioners/md10333826/md10333826-280x280.jpg", price: 790000, badges: [], category: "aircon", subCategory: "wall", rating: 4.2, reviewCount: 456 },
+  { id: "ac-6", name: "LG 휘센 이동식 에어컨", model: "PQ08DAWBS", imageUrl: "https://www.lge.co.kr/kr/images/air-conditioners/md10561834/md10561834-280x280.jpg", price: 490000, badges: [], category: "aircon", subCategory: "portable", rating: 4.0, reviewCount: 789 },
 
   // 시스템 에어컨
-  { id: "sa-1", name: "LG 휘센 시스템 에어컨 멀티V", model: "RPNW11S40S", price: 5900000, badges: [], category: "system-aircon", subCategory: "residential", rating: 4.5, reviewCount: 34 },
-  { id: "sa-2", name: "LG 휘센 시스템 에어컨 1Way", model: "RPNW07S40S", price: 2990000, badges: ["인기"], category: "system-aircon", subCategory: "residential", rating: 4.4, reviewCount: 67 },
+  { id: "sa-1", name: "LG 휘센 시스템 에어컨 멀티V", model: "RPNW11S40S", imageUrl: "https://www.lge.co.kr/kr/images/air-conditioners/md10561834/md10561834-280x280.jpg", price: 5900000, badges: [], category: "system-aircon", subCategory: "residential", rating: 4.5, reviewCount: 34 },
+  { id: "sa-2", name: "LG 휘센 시스템 에어컨 1Way", model: "RPNW07S40S", imageUrl: "https://www.lge.co.kr/kr/images/air-conditioners/md10561834/md10561834-280x280.jpg", price: 2990000, badges: ["인기"], category: "system-aircon", subCategory: "residential", rating: 4.4, reviewCount: 67 },
 
   // 공기청정기
-  { id: "ap-1", name: "LG 퓨리케어 360˚ 공기청정기 알파 플러스", model: "AS186HWWL", price: 490000, originalPrice: 590000, badges: ["닷컴 ONLY"], category: "air-purifier", subCategory: "360", rating: 4.6, reviewCount: 567, features: ["360˚ 청정", "스마트센서", "펫 모드"] },
-  { id: "ap-2", name: "LG 퓨리케어 360˚ 공기청정기 알파", model: "AS141HWWL", price: 390000, badges: [], category: "air-purifier", subCategory: "360", rating: 4.5, reviewCount: 456 },
-  { id: "ap-3", name: "LG 에어로타워", model: "FS063PSSA", price: 890000, badges: ["인기"], category: "air-purifier", subCategory: "aero", rating: 4.7, reviewCount: 234, features: ["공기청정+온풍+선풍", "UVnano"] },
-  { id: "ap-4", name: "LG 에어로퍼니처", model: "AS064PWFA1", price: 590000, badges: [], category: "air-purifier", subCategory: "aero", rating: 4.4, reviewCount: 345 },
+  { id: "ap-1", name: "LG 퓨리케어 360˚ 공기청정기 알파 플러스", model: "AS186HWWL", imageUrl: "https://www.lge.co.kr/kr/images/air-purifier/md10745833/md10745833-280x280.jpg", price: 490000, originalPrice: 590000, badges: ["닷컴 ONLY"], category: "air-purifier", subCategory: "360", rating: 4.6, reviewCount: 567, features: ["360˚ 청정", "스마트센서", "펫 모드"] },
+  { id: "ap-2", name: "LG 퓨리케어 360˚ 공기청정기 알파", model: "AS141HWWL", imageUrl: "https://www.lge.co.kr/kr/images/air-purifier/md10525838/md10525838-280x280.jpg", price: 390000, badges: [], category: "air-purifier", subCategory: "360", rating: 4.5, reviewCount: 456 },
+  { id: "ap-3", name: "LG 에어로타워", model: "FS063PSSA", imageUrl: "https://www.lge.co.kr/kr/images/air-purifier/md10526826/md10526826-280x280.jpg", price: 890000, badges: ["인기"], category: "air-purifier", subCategory: "aero", rating: 4.7, reviewCount: 234, features: ["공기청정+온풍+선풍", "UVnano"] },
+  { id: "ap-4", name: "LG 에어로퍼니처", model: "AS064PWFA1", imageUrl: "https://www.lge.co.kr/kr/images/air-purifier/md10565827/md10565827-280x280.jpg", price: 590000, badges: [], category: "air-purifier", subCategory: "aero", rating: 4.4, reviewCount: 345 },
 
   // 제습기
-  { id: "dh-1", name: "LG 퓨리케어 제습기 20L", model: "DQ200PGAA", price: 590000, badges: ["인기"], category: "dehumidifier", rating: 4.5, reviewCount: 456 },
-  { id: "dh-2", name: "LG 퓨리케어 제습기 15L", model: "DQ150PGAA", price: 490000, badges: [], category: "dehumidifier", rating: 4.4, reviewCount: 345 },
+  { id: "dh-1", name: "LG 퓨리케어 제습기 20L", model: "DQ200PGAA", imageUrl: "https://www.lge.co.kr/kr/images/dehumidifiers/md10466827/md10466827-280x280.jpg", price: 590000, badges: ["인기"], category: "dehumidifier", rating: 4.5, reviewCount: 456 },
+  { id: "dh-2", name: "LG 퓨리케어 제습기 15L", model: "DQ150PGAA", imageUrl: "https://www.lge.co.kr/kr/images/dehumidifiers/md10466827/md10466827-280x280.jpg", price: 490000, badges: [], category: "dehumidifier", rating: 4.4, reviewCount: 345 },
 
   // 가습기
-  { id: "hm-1", name: "LG 퓨리케어 정수 가습기", model: "HW300BBN", price: 590000, badges: ["신제품"], category: "humidifier", subCategory: "purified", rating: 4.5, reviewCount: 123 },
-  { id: "hm-2", name: "LG 퓨리케어 자연기화 가습기", model: "HW100BBNA", price: 290000, badges: [], category: "humidifier", subCategory: "natural", rating: 4.3, reviewCount: 234 },
+  { id: "hm-1", name: "LG 퓨리케어 정수 가습기", model: "HW300BBN", imageUrl: "https://www.lge.co.kr/kr/images/dehumidifiers-and-humidifiers/md08038434/md08038434-280x280.jpg", price: 590000, badges: ["신제품"], category: "humidifier", subCategory: "purified", rating: 4.5, reviewCount: 123 },
+  { id: "hm-2", name: "LG 퓨리케어 자연기화 가습기", model: "HW100BBNA", imageUrl: "https://www.lge.co.kr/kr/images/humidifiers/md09088827/md09088827-280x280.jpg", price: 290000, badges: [], category: "humidifier", subCategory: "natural", rating: 4.3, reviewCount: 234 },
 
   // ═══════════════ AI Home ═══════════════
   { id: "ah-1", name: "LG ThinQ ON AI 허브", model: "KBLS1S01", price: 199000, badges: ["신제품"], category: "ai-home", subCategory: "hub", rating: 4.3, reviewCount: 89, features: ["Matter 지원", "음성인식"] },

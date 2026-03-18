@@ -102,6 +102,15 @@
   font-size: 14px;
 }
 
+.featureImage {
+  flex: 1;
+  min-height: 160px;
+  max-height: 240px;
+  width: 100%;
+  object-fit: contain;
+  border-radius: 12px;
+}
+
 .productList {
   flex: 1;
   display: flex;
@@ -119,6 +128,19 @@
 }
 
 .productCard:hover .imagePlaceholder {
+  background: var(--color-gray-200);
+}
+
+.productImage {
+  width: 100%;
+  height: 240px;
+  object-fit: contain;
+  border-radius: 12px;
+  background: var(--color-gray-100);
+  transition: background 0.2s;
+}
+
+.productCard:hover .productImage {
   background: var(--color-gray-200);
 }
 

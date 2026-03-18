@@ -25,6 +25,8 @@ const PRODUCTS = [
     monthlyPrice: "29,900",
     badge: "닷컴 ONLY",
     discountTag: "요금 할인",
+    imageUrl:
+      "https://www.lge.co.kr/kr/images/water-purifiers/md10017831/md10017831-280x280.jpg",
   },
   {
     id: 2,
@@ -33,6 +35,8 @@ const PRODUCTS = [
     monthlyPrice: "25,900",
     badge: null,
     discountTag: null,
+    imageUrl:
+      "https://www.lge.co.kr/kr/images/water-purifiers/md09976827/md09976827-280x280.jpg",
   },
   {
     id: 3,
@@ -41,6 +45,8 @@ const PRODUCTS = [
     monthlyPrice: "22,900",
     badge: "닷컴 ONLY",
     discountTag: "요금 할인",
+    imageUrl:
+      "https://www.lge.co.kr/kr/images/water-purifiers/md10353830/md10353830-280x280.jpg",
   },
 ];
 
@@ -79,9 +85,11 @@ function Subscription() {
               <br />
               멤버십 최대 3만P까지!
             </p>
-            <div className={styles.featureImagePlaceholder}>
-              <span>제품 이미지</span>
-            </div>
+            <img
+              src={PRODUCTS[0].imageUrl}
+              alt={CATEGORIES[activeCategory]}
+              className={styles.featureImage}
+            />
           </div>
 
           <div className={styles.productList}>
@@ -100,9 +108,11 @@ function Subscription() {
                       {product.discountTag}
                     </span>
                   )}
-                  <div className={styles.imagePlaceholder}>
-                    <span>제품 이미지</span>
-                  </div>
+                  <img
+                    src={product.imageUrl}
+                    alt={product.name}
+                    className={styles.productImage}
+                  />
                 </div>
                 <div className={styles.info}>
                   <h3 className={styles.productName}>{product.name}</h3>

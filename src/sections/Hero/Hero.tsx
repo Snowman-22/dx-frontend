@@ -8,18 +8,24 @@ const SLIDES = [
     title: "냉장고&세탁기 구매 찬스\n냉세만세 오픈!",
     subtitle: "매일 열리는 선착순 할인 쿠폰",
     bgColor: "#f5f5f0",
+    imageUrl:
+      "https://www.lge.co.kr/kr/images/refrigerators/md10635830/md10635830-280x280.jpg",
   },
   {
     id: 2,
     title: "LG 그램 Pro AI 2026\n새로운 시작",
     subtitle: "AI가 만드는 새로운 노트북 경험",
     bgColor: "#f0f0f5",
+    imageUrl:
+      "https://www.lge.co.kr/kr/images/notebook/md10744830/md10744830-280x280.jpg",
   },
   {
     id: 3,
     title: "LG 퓨리케어 에어로타워\n깨끗한 공기의 시작",
     subtitle: "공기청정과 온풍을 한번에",
     bgColor: "#f5f0f0",
+    imageUrl:
+      "https://www.lge.co.kr/kr/images/air-purifier/md10526826/md10526826-280x280.jpg",
   },
 ];
 
@@ -83,9 +89,11 @@ function Hero() {
             <button className={styles.ctaBtn}>자세히 보기</button>
           </div>
           <div className={styles.imageArea}>
-            <div className={styles.imagePlaceholder}>
-              <span>제품 이미지 영역</span>
-            </div>
+            <img
+              src={slide.imageUrl}
+              alt={slide.title.replace("\n", " ")}
+              className={styles.slideImage}
+            />
           </div>
         </div>
       </div>

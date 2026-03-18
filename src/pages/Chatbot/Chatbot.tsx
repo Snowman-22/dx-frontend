@@ -765,7 +765,7 @@ function Chatbot() {
               <button
                 type="button"
                 className={styles.recommendCtaBtn}
-                onClick={() => navigate("/recommend")}
+                onClick={() => navigate("/recommendchatbot")}
               >
                 추천 리스트 보기
               </button>

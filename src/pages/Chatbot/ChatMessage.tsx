@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import snowLogoImage from "../../assets/images/snow_logo.png";
 import type { InteriorStyleOption } from "./chatScenario";
 import styles from "./ChatMessage.module.css";
 
@@ -111,7 +112,7 @@ function ChatMessage({
     <div className={`${styles.row} ${isBot ? styles.rowBot : styles.rowUser}`}>
       {isBot && (
         <div className={styles.avatar}>
-          <span className={styles.avatarText}>h</span>
+          <img src={snowLogoImage} alt="챗봇 아이콘" className={styles.avatarImage} />
         </div>
       )}
       {content}

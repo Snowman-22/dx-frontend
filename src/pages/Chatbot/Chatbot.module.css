@@ -66,6 +66,34 @@
   gap: 20px;
 }
 
+.ctaBar {
+  width: min(100%, 780px);
+  display: flex;
+  justify-content: center;
+  padding: 0 8px;
+}
+
+.recommendCtaBtn {
+  min-width: 220px;
+  padding: 14px 26px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #7acb78 0%, #63b962 100%);
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 700;
+  box-shadow: 0 16px 28px rgba(99, 185, 98, 0.24);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    filter 0.2s ease;
+}
+
+.recommendCtaBtn:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.02);
+  box-shadow: 0 18px 30px rgba(99, 185, 98, 0.28);
+}
+
 .quickReplyList {
   width: min(100%, 780px);
   position: relative;
@@ -208,7 +236,7 @@
 }
 
 .modalCard {
-  width: min(100%, 640px);
+  width: min(100%, 980px);
   max-height: min(78vh, 680px);
   overflow-y: auto;
   padding: 26px 26px 22px;
@@ -232,6 +260,44 @@
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.08em;
+}
+
+.applianceTabs {
+  display: flex;
+  align-items: flex-end;
+  gap: 22px;
+  margin-bottom: 18px;
+  padding-bottom: 2px;
+  border-bottom: 2px solid rgba(226, 232, 223, 0.9);
+}
+
+.applianceTabBtn {
+  position: relative;
+  padding: 0 2px 10px;
+  color: #d0d8cb;
+  font-size: 30px;
+  font-weight: 600;
+  line-height: 1;
+  transition: color 0.2s ease;
+}
+
+.applianceTabBtn::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -2px;
+  height: 4px;
+  border-radius: 999px;
+  background: transparent;
+}
+
+.applianceTabBtnActive {
+  color: #73cf74;
+}
+
+.applianceTabBtnActive::after {
+  background: #73cf74;
 }
 
 .modalTitle {
@@ -259,22 +325,23 @@
 
 .applianceGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(104px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(126px, 1fr));
   gap: 14px;
 }
 
 .applianceCard {
-  min-height: 128px;
-  padding: 14px 10px 12px;
-  border: 1px solid rgba(223, 229, 219, 0.96);
-  border-radius: 18px;
+  position: relative;
+  min-height: 152px;
+  padding: 14px 12px 14px;
+  border: 1px solid rgba(224, 229, 223, 0.96);
+  border-radius: 16px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 12px;
+  justify-content: space-between;
+  gap: 10px;
   background: #ffffff;
-  box-shadow: 0 8px 16px rgba(177, 189, 168, 0.08);
+  box-shadow: 0 8px 18px rgba(177, 189, 168, 0.1);
   transition:
     border-color 0.2s ease,
     box-shadow 0.2s ease,
@@ -284,40 +351,116 @@
 
 .applianceCard:hover {
   transform: translateY(-1px);
-  border-color: rgba(169, 197, 161, 0.95);
-  box-shadow: 0 12px 22px rgba(154, 177, 143, 0.12);
+  border-color: rgba(157, 204, 152, 0.95);
+  box-shadow: 0 12px 22px rgba(154, 177, 143, 0.14);
 }
 
 .applianceCardSelected {
-  border-color: rgba(132, 188, 126, 0.95);
-  background: rgba(241, 248, 239, 0.98);
-  box-shadow: 0 14px 24px rgba(132, 188, 126, 0.16);
+  border-color: rgba(122, 203, 120, 0.95);
+  background: linear-gradient(180deg, rgba(248, 255, 246, 0.98) 0%, rgba(239, 251, 236, 0.98) 100%);
+  box-shadow:
+    0 0 0 2px rgba(122, 203, 120, 0.18),
+    0 16px 28px rgba(122, 203, 120, 0.2);
+  transform: translateY(-2px);
 }
 
-.applianceIcon {
-  width: 56px;
-  height: 56px;
-  border-radius: 16px;
+.applianceCardDisabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.applianceCardDisabled:hover {
+  transform: none;
+  border-color: rgba(224, 229, 223, 0.96);
+  box-shadow: none;
+}
+
+.applianceImageWrap {
+  width: 100%;
+  height: 92px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(252, 252, 252, 1) 0%, rgba(246, 248, 244, 1) 100%);
+}
+
+.applianceCardSelected .applianceImageWrap {
+  background: linear-gradient(180deg, rgba(243, 255, 239, 1) 0%, rgba(226, 247, 220, 1) 100%);
+}
+
+.applianceImage {
+  max-width: 100%;
+  max-height: 88px;
+  object-fit: contain;
+  mix-blend-mode: multiply;
+  transition: transform 0.2s ease;
+}
+
+.applianceCardSelected .applianceImage {
+  transform: scale(1.04);
+}
+
+.applianceSelectionBadge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 7px;
+  border-radius: 999px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: #7f9580;
-  font-size: 24px;
-  font-weight: 600;
-  background: linear-gradient(180deg, rgba(247, 250, 245, 0.96) 0%, rgba(234, 242, 230, 0.96) 100%);
+  background: rgba(255, 255, 255, 0.92);
+  color: transparent;
+  font-size: 0;
+  box-shadow: 0 6px 12px rgba(122, 203, 120, 0.12);
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
 }
 
-.applianceCardSelected .applianceIcon {
-  color: #5d8658;
-  background: linear-gradient(180deg, rgba(236, 246, 232, 1) 0%, rgba(219, 239, 214, 1) 100%);
+.applianceSelectionBadge::before {
+  content: "";
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(190, 204, 189, 0.72);
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.applianceCardSelected .applianceSelectionBadge {
+  background: #73cf74;
+  box-shadow: 0 10px 18px rgba(115, 207, 116, 0.28);
+  transform: scale(1.03);
+}
+
+.applianceCardSelected .applianceSelectionBadge::before {
+  width: 6px;
+  height: 12px;
+  border-radius: 0;
+  background: transparent;
+  border-right: 2px solid #ffffff;
+  border-bottom: 2px solid #ffffff;
+  transform: rotate(45deg) translate(-1px, -1px);
 }
 
 .applianceLabel {
   color: #415042;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 500;
   text-align: center;
   line-height: 1.3;
+  transition: color 0.2s ease, font-weight 0.2s ease;
+}
+
+.applianceCardSelected .applianceLabel {
+  color: #2e5a31;
+  font-weight: 700;
 }
 
 .modalFooter {
@@ -360,6 +503,10 @@
     width: 100%;
   }
 
+  .ctaBar {
+    width: 100%;
+  }
+
   .quickReplyListFive {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -383,6 +530,10 @@
     padding-bottom: 100px;
   }
 
+  .recommendCtaBtn {
+    width: 100%;
+  }
+
   .inputWrap {
     padding-left: 12px;
   }
@@ -391,11 +542,19 @@
     font-size: 18px;
   }
 
+  .applianceTabs {
+    gap: 16px;
+  }
+
+  .applianceTabBtn {
+    font-size: 22px;
+  }
+
   .applianceGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .applianceCard {
-    min-height: 112px;
+    min-height: 138px;
   }
 }

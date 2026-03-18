@@ -8,36 +8,71 @@ import {
   getApplianceOptions,
   getApplianceSelectionMessages,
   getApplianceSelectionUserMessage,
+  getBudgetCompletedMessage,
+  getBudgetInvalidMessage,
   getBudgetPromptMessage,
   getBudgetQuickReplies,
+  getFurnitureRecommendationQuickReplies,
+  getFurnitureRecommendationSkippedMessage,
   getGreetingMessage,
   getIntroMessage,
+  getInteriorStyleOptions,
+  getInteriorStylePromptMessage,
+  getInteriorStyleSelectedMessage,
   getInvalidRoomTypeMessage,
   getLifestyleQuickReplies,
+  getLifestylePromptMessage,
   getLifestyleSelectionMessage,
   getRoomTypeQuickReplies,
   getRoomTypeSelectionMessages,
   getRestartMessage,
+  getSpaceSizeInvalidMessage,
   getSpaceSizeSelectionMessages,
   getSpaceSizeQuickReplies,
   isValidRoomTypeInput,
+  type InteriorStyleOption,
   type LifeTypeKey,
 } from "./chatScenario";
 import styles from "./Chatbot.module.css";
 
-interface Message {
+interface TextMessage {
   id: string;
   sender: "bot" | "user";
   text: string;
 }
 
+interface InteriorStyleSelectorMessage {
+  id: string;
+  sender: "bot";
+  type: "interior-style-selector";
+  options: InteriorStyleOption[];
+}
+
+type Message = TextMessage | InteriorStyleSelectorMessage;
+
+interface BotQueueTextItem {
+  type: "text";
+  text: string;
+}
+
+interface BotQueueInteriorStyleItem {
+  type: "interior-style-selector";
+  options: InteriorStyleOption[];
+}
+
+type BotQueueItem = BotQueueTextItem | BotQueueInteriorStyleItem;
+
 type ChatStage =
   | "roomType"
   | "applianceSelection"
   | "spaceSize"
+  | "furnitureRecommendation"
+  | "interiorStyle"
   | "lifestyle"
   | "budget"
   | "free";
+
+type ApplianceTab = "owned" | "needed";
 
 const BOT_TOKEN_DELAY_MS = 110;
 
@@ -49,25 +84,37 @@ function Chatbot() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [currentStage, setCurrentStage] = useState<ChatStage>("roomType");
+  const [currentStage, setCurrentStage] = useState<ChatStage>("spaceSize");
   const [applianceModalOpen, setApplianceModalOpen] = useState(false);
   const [shouldAutoOpenApplianceModal, setShouldAutoOpenApplianceModal] =
     useState(false);
-  const [selectedAppliances, setSelectedAppliances] = useState<string[]>([]);
+  const [activeApplianceTab, setActiveApplianceTab] =
+    useState<ApplianceTab>("owned");
+  const [selectedOwnedAppliances, setSelectedOwnedAppliances] = useState<string[]>([]);
+  const [selectedNeededAppliances, setSelectedNeededAppliances] = useState<string[]>([]);
+  const [selectedInteriorStyle, setSelectedInteriorStyle] = useState<string | null>(
+    null,
+  );
   const [selectedLifestyles, setSelectedLifestyles] = useState<string[]>([]);
   const [replyButtonsReady, setReplyButtonsReady] = useState(false);
   const [botQueueVersion, setBotQueueVersion] = useState(0);
   const [isBotTyping, setIsBotTyping] = useState(false);
+  const [showRecommendCta, setShowRecommendCta] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
-  const botQueueRef = useRef<string[]>([]);
+  const botQueueRef = useRef<BotQueueItem[]>([]);
   const isBotQueueProcessingRef = useRef(false);
   const botQueueSessionRef = useRef(0);
   const applianceModalTimeoutRef = useRef<number | null>(null);
+  const spaceSizeInvalidNoticeShownRef = useRef(false);
+  const budgetInvalidNoticeShownRef = useRef(false);
 
   const applianceOptions = getApplianceOptions();
   const roomTypeQuickReplies = getRoomTypeQuickReplies();
   const spaceSizeQuickReplies = getSpaceSizeQuickReplies();
+  const furnitureRecommendationQuickReplies =
+    getFurnitureRecommendationQuickReplies();
+  const interiorStyleOptions = getInteriorStyleOptions();
   const lifestyleQuickReplies = getLifestyleQuickReplies();
   const budgetQuickReplies = getBudgetQuickReplies();
 
@@ -91,10 +138,14 @@ function Chatbot() {
     setBotQueueVersion((prev) => prev + 1);
   };
 
-  const enqueueBotMessages = (texts: string[]) => {
-    if (texts.length === 0) return;
-    botQueueRef.current.push(...texts);
+  const enqueueBotQueueItems = (items: BotQueueItem[]) => {
+    if (items.length === 0) return;
+    botQueueRef.current.push(...items);
     setBotQueueVersion((prev) => prev + 1);
+  };
+
+  const enqueueBotMessages = (texts: string[]) => {
+    enqueueBotQueueItems(texts.map((text) => ({ type: "text", text })));
   };
 
   const appendUserMessage = (text: string) => {
@@ -111,18 +162,67 @@ function Chatbot() {
     ]);
   };
 
+  const handleInputChange = (nextValue: string) => {
+    if (currentStage === "spaceSize") {
+      const digitsOnly = nextValue.replace(/\D+/g, "");
+      const hasInvalidInput = nextValue !== digitsOnly;
+
+      if (hasInvalidInput && !spaceSizeInvalidNoticeShownRef.current) {
+        enqueueBotMessages([getSpaceSizeInvalidMessage()]);
+        spaceSizeInvalidNoticeShownRef.current = true;
+      }
+
+      if (!hasInvalidInput) {
+        spaceSizeInvalidNoticeShownRef.current = false;
+      }
+
+      setInput(digitsOnly);
+      return;
+    }
+
+    if (currentStage !== "budget") {
+      spaceSizeInvalidNoticeShownRef.current = false;
+      budgetInvalidNoticeShownRef.current = false;
+      setInput(nextValue);
+      return;
+    }
+
+    const digitsOnly = nextValue.replace(/\D+/g, "");
+    const hasInvalidInput = nextValue !== digitsOnly;
+
+    if (hasInvalidInput && !budgetInvalidNoticeShownRef.current) {
+      enqueueBotMessages([getBudgetInvalidMessage()]);
+      budgetInvalidNoticeShownRef.current = true;
+    }
+
+    if (!hasInvalidInput) {
+      budgetInvalidNoticeShownRef.current = false;
+    }
+
+    setInput(digitsOnly);
+  };
+
   useEffect(() => {
-    setCurrentStage("roomType");
+    setCurrentStage("spaceSize");
     setApplianceModalOpen(false);
     setShouldAutoOpenApplianceModal(false);
-    setSelectedAppliances([]);
+    setActiveApplianceTab("owned");
+    setSelectedOwnedAppliances([]);
+    setSelectedNeededAppliances([]);
+    setSelectedInteriorStyle(null);
     setSelectedLifestyles([]);
+    setShowRecommendCta(false);
     setReplyButtonsReady(false);
     clearApplianceModalTimer();
     resetBotQueue();
     setMessages([]);
     enqueueBotMessages([getIntroMessage(lifeType), getGreetingMessage(lifeType)]);
   }, [lifeType]);
+
+  useEffect(() => {
+    spaceSizeInvalidNoticeShownRef.current = false;
+    budgetInvalidNoticeShownRef.current = false;
+  }, [currentStage]);
 
   useEffect(() => {
     return () => {
@@ -167,8 +267,21 @@ function Chatbot() {
           botQueueRef.current.length > 0 &&
           sessionId === botQueueSessionRef.current
         ) {
-          const nextText = botQueueRef.current.shift();
-          if (!nextText) continue;
+          const nextItem = botQueueRef.current.shift();
+          if (!nextItem) continue;
+
+          if (nextItem.type === "interior-style-selector") {
+            setMessages((prev) => [
+              ...prev,
+              {
+                id: crypto.randomUUID(),
+                sender: "bot",
+                type: "interior-style-selector",
+                options: nextItem.options,
+              },
+            ]);
+            continue;
+          }
 
           const nextMessageId = crypto.randomUUID();
           setMessages((prev) => [
@@ -180,7 +293,7 @@ function Chatbot() {
             },
           ]);
 
-          const tokens = nextText.match(/\S+\s*/g) ?? [nextText];
+          const tokens = nextItem.text.match(/\S+\s*/g) ?? [nextItem.text];
           let displayedText = "";
 
           for (const token of tokens) {
@@ -238,6 +351,7 @@ function Chatbot() {
       botQueueRef.current.length === 0 &&
       (currentStage === "roomType" ||
         currentStage === "spaceSize" ||
+        currentStage === "furnitureRecommendation" ||
         currentStage === "lifestyle" ||
         currentStage === "budget");
 
@@ -268,6 +382,16 @@ function Chatbot() {
 
     appendUserMessage(trimmed);
     enqueueBotMessages([buildBotReply(trimmed)]);
+    setInput("");
+  };
+
+  const completeBudgetStep = (answer: string) => {
+    appendUserMessage(answer);
+    enqueueBotMessages([getBudgetCompletedMessage()]);
+    budgetInvalidNoticeShownRef.current = false;
+    setReplyButtonsReady(false);
+    setShowRecommendCta(true);
+    setCurrentStage("free");
     setInput("");
   };
 
@@ -318,15 +442,32 @@ function Chatbot() {
     }
 
     if (currentStage === "budget") {
-      appendUserMessage(trimmed);
-      setCurrentStage("free");
-      setInput("");
+      if (!/^\d+$/.test(trimmed) || Number(trimmed) <= 0) {
+        enqueueBotMessages([getBudgetInvalidMessage()]);
+        return;
+      }
+
+      completeBudgetStep(trimmed);
       return;
     }
 
     if (currentStage === "spaceSize") {
-      appendUserMessage(trimmed);
-      setCurrentStage("free");
+      if (!/^\d+$/.test(trimmed) || Number(trimmed) <= 0) {
+        enqueueBotMessages([getSpaceSizeInvalidMessage()]);
+        return;
+      }
+
+      spaceSizeInvalidNoticeShownRef.current = false;
+      handleSpaceSizeSelect(trimmed, true);
+      return;
+    }
+
+    if (currentStage === "furnitureRecommendation") {
+      setInput("");
+      return;
+    }
+
+    if (currentStage === "interiorStyle") {
       setInput("");
       return;
     }
@@ -335,11 +476,15 @@ function Chatbot() {
   };
 
   const handleNewChat = () => {
-    setCurrentStage("roomType");
+    setCurrentStage("spaceSize");
     setApplianceModalOpen(false);
     setShouldAutoOpenApplianceModal(false);
-    setSelectedAppliances([]);
+    setActiveApplianceTab("owned");
+    setSelectedOwnedAppliances([]);
+    setSelectedNeededAppliances([]);
+    setSelectedInteriorStyle(null);
     setSelectedLifestyles([]);
+    setShowRecommendCta(false);
     setReplyButtonsReady(false);
     clearApplianceModalTimer();
     resetBotQueue();
@@ -348,16 +493,24 @@ function Chatbot() {
   };
 
   const toggleApplianceSelection = (id: string) => {
-    setSelectedAppliances((prev) => {
-      if (id === "none") {
-        return prev.includes("none") ? [] : ["none"];
-      }
+    if (activeApplianceTab === "owned") {
+      if (selectedNeededAppliances.includes(id)) return;
 
-      const withoutNone = prev.filter((item) => item !== "none");
-      return withoutNone.includes(id)
-        ? withoutNone.filter((item) => item !== id)
-        : [...withoutNone, id];
-    });
+      setSelectedOwnedAppliances((prev) =>
+        prev.includes(id)
+          ? prev.filter((item) => item !== id)
+          : [...prev, id],
+      );
+      return;
+    }
+
+    if (selectedOwnedAppliances.includes(id)) return;
+
+    setSelectedNeededAppliances((prev) =>
+      prev.includes(id)
+        ? prev.filter((item) => item !== id)
+        : [...prev, id],
+    );
   };
 
   const handleRoomTypeSelect = (label: string) => {
@@ -365,26 +518,86 @@ function Chatbot() {
   };
 
   const handleApplianceComplete = () => {
-    const selectedLabels = applianceOptions
-      .filter((option) => selectedAppliances.includes(option.id))
+    const selectedOwnedLabels = applianceOptions
+      .filter((option) => selectedOwnedAppliances.includes(option.id))
       .map((option) => option.label);
+    const selectedNeededLabels = applianceOptions
+      .filter((option) => selectedNeededAppliances.includes(option.id))
+      .map((option) => option.label);
+    const selectedLabels = [...selectedOwnedLabels, ...selectedNeededLabels];
+    const userSelectionSummary =
+      selectedLabels.length === 0
+        ? getApplianceSelectionUserMessage([])
+        : [
+            selectedOwnedLabels.length > 0
+              ? `보유 가전: ${selectedOwnedLabels.join(", ")}`
+              : null,
+            selectedNeededLabels.length > 0
+              ? `필요 가전: ${selectedNeededLabels.join(", ")}`
+              : null,
+          ]
+            .filter(Boolean)
+            .join("\n");
 
-    appendUserMessage(getApplianceSelectionUserMessage(selectedLabels));
+    appendUserMessage(userSelectionSummary);
     enqueueBotMessages(getApplianceSelectionMessages(selectedLabels));
     setApplianceModalOpen(false);
     setShouldAutoOpenApplianceModal(false);
-    setSelectedAppliances([]);
+    setActiveApplianceTab("owned");
+    setSelectedOwnedAppliances([]);
+    setSelectedNeededAppliances([]);
+    setSelectedInteriorStyle(null);
     setSelectedLifestyles([]);
     setReplyButtonsReady(false);
-    setCurrentStage("spaceSize");
+    setCurrentStage("furnitureRecommendation");
   };
 
-  const handleSpaceSizeSelect = (label: string) => {
+  const handleSpaceSizeSelect = (label: string, isDirectInput = false) => {
     const trimmed = label.trim();
     if (!trimmed) return;
 
     appendUserMessage(trimmed);
-    enqueueBotMessages(getSpaceSizeSelectionMessages(trimmed));
+    enqueueBotMessages(getSpaceSizeSelectionMessages(trimmed, isDirectInput));
+    setReplyButtonsReady(false);
+    setCurrentStage("applianceSelection");
+    setShouldAutoOpenApplianceModal(true);
+    setInput("");
+  };
+
+  const handleFurnitureRecommendationSelect = (label: string) => {
+    const trimmed = label.trim();
+    if (!trimmed) return;
+
+    appendUserMessage(trimmed);
+    setSelectedInteriorStyle(null);
+    setReplyButtonsReady(false);
+
+    if (trimmed === "네! 추천 해주세요") {
+      enqueueBotQueueItems([
+        { type: "text", text: getInteriorStylePromptMessage() },
+        { type: "interior-style-selector", options: interiorStyleOptions },
+      ]);
+      setCurrentStage("interiorStyle");
+      return;
+    }
+
+    enqueueBotMessages([
+      getFurnitureRecommendationSkippedMessage(),
+      getLifestylePromptMessage(),
+    ]);
+    setCurrentStage("lifestyle");
+  };
+
+  const handleInteriorStyleSelect = (label: string) => {
+    const trimmed = label.trim();
+    if (!trimmed || currentStage !== "interiorStyle") return;
+
+    setSelectedInteriorStyle(trimmed);
+    appendUserMessage(trimmed);
+    enqueueBotMessages([
+      getInteriorStyleSelectedMessage(),
+      getLifestylePromptMessage(),
+    ]);
     setReplyButtonsReady(false);
     setCurrentStage("lifestyle");
   };
@@ -404,22 +617,31 @@ function Chatbot() {
     const trimmed = label.trim();
     if (!trimmed) return;
 
-    appendUserMessage(trimmed);
-    setReplyButtonsReady(false);
-    setCurrentStage("free");
+    completeBudgetStep(trimmed);
   };
 
   const showRoomTypeQuickReplies =
     currentStage === "roomType" && replyButtonsReady;
   const showSpaceSizeQuickReplies =
     currentStage === "spaceSize" && replyButtonsReady;
+  const showFurnitureRecommendationQuickReplies =
+    currentStage === "furnitureRecommendation" && replyButtonsReady;
   const showLifestyleQuickReplies =
     currentStage === "lifestyle" && replyButtonsReady;
   const showBudgetQuickReplies =
     currentStage === "budget" && replyButtonsReady;
-  const isTextInputDisabled = currentStage === "lifestyle";
+  const applianceTabPrompt =
+    activeApplianceTab === "owned"
+      ? "현재 보유 중인 가전을 선택해 주세요"
+      : "현재 필요한 가전을 선택해 주세요";
+  const isTextInputDisabled =
+    currentStage === "furnitureRecommendation" ||
+    currentStage === "interiorStyle" ||
+    currentStage === "lifestyle";
   const isSendDisabled =
-    currentStage === "lifestyle" ? selectedLifestyles.length === 0 : !input.trim();
+    currentStage === "lifestyle"
+      ? selectedLifestyles.length === 0
+      : isTextInputDisabled || !input.trim();
 
   return (
     <div className={styles.page}>
@@ -436,8 +658,31 @@ function Chatbot() {
             <div className={styles.modalCard} onClick={(e) => e.stopPropagation()}>
               <div className={styles.modalHeader}>
                 <div>
-                  <p className={styles.modalEyebrow}>보유 가전 체크</p>
-                  <h2 className={styles.modalTitle}>현재 보유 중인 가전을 선택해 주세요</h2>
+                  <div className={styles.applianceTabs} role="tablist" aria-label="가전 선택 탭">
+                    <button
+                      type="button"
+                      role="tab"
+                      aria-selected={activeApplianceTab === "owned"}
+                      className={`${styles.applianceTabBtn} ${
+                        activeApplianceTab === "owned" ? styles.applianceTabBtnActive : ""
+                      }`}
+                      onClick={() => setActiveApplianceTab("owned")}
+                    >
+                      보유
+                    </button>
+                    <button
+                      type="button"
+                      role="tab"
+                      aria-selected={activeApplianceTab === "needed"}
+                      className={`${styles.applianceTabBtn} ${
+                        activeApplianceTab === "needed" ? styles.applianceTabBtnActive : ""
+                      }`}
+                      onClick={() => setActiveApplianceTab("needed")}
+                    >
+                      필요
+                    </button>
+                  </div>
+                  <h2 className={styles.modalTitle}>{applianceTabPrompt}</h2>
                 </div>
                 <button
                   type="button"
@@ -451,7 +696,14 @@ function Chatbot() {
 
               <div className={styles.applianceGrid}>
                 {applianceOptions.map((option) => {
-                  const selected = selectedAppliances.includes(option.id);
+                  const selected =
+                    activeApplianceTab === "owned"
+                      ? selectedOwnedAppliances.includes(option.id)
+                      : selectedNeededAppliances.includes(option.id);
+                  const disabled =
+                    activeApplianceTab === "owned"
+                      ? selectedNeededAppliances.includes(option.id)
+                      : selectedOwnedAppliances.includes(option.id);
 
                   return (
                     <button
@@ -459,10 +711,22 @@ function Chatbot() {
                       type="button"
                       className={`${styles.applianceCard} ${
                         selected ? styles.applianceCardSelected : ""
-                      }`}
+                      } ${disabled ? styles.applianceCardDisabled : ""}`}
+                      disabled={disabled}
+                      aria-pressed={selected}
+                      aria-disabled={disabled}
                       onClick={() => toggleApplianceSelection(option.id)}
                     >
-                      <span className={styles.applianceIcon}>{option.icon}</span>
+                      <span className={styles.applianceSelectionBadge} aria-hidden="true">
+                        {selected ? "선택됨" : ""}
+                      </span>
+                      <div className={styles.applianceImageWrap}>
+                        <img
+                          src={option.imageSrc}
+                          alt={option.label}
+                          className={styles.applianceImage}
+                        />
+                      </div>
                       <span className={styles.applianceLabel}>{option.label}</span>
                     </button>
                   );
@@ -484,12 +748,30 @@ function Chatbot() {
 
         <div className={styles.messages}>
           {messages.map((msg) => (
-            <ChatMessage key={msg.id} message={msg} />
+            <ChatMessage
+              key={msg.id}
+              message={msg}
+              selectedInteriorStyle={selectedInteriorStyle}
+              interiorStyleSelectionEnabled={currentStage === "interiorStyle"}
+              onInteriorStyleSelect={handleInteriorStyleSelect}
+            />
           ))}
           <div ref={messagesEndRef} />
         </div>
 
         <div className={styles.inputSection}>
+          {showRecommendCta && (
+            <div className={styles.ctaBar}>
+              <button
+                type="button"
+                className={styles.recommendCtaBtn}
+                onClick={() => navigate("/recommend")}
+              >
+                추천 리스트 보기
+              </button>
+            </div>
+          )}
+
           {showRoomTypeQuickReplies && (
             <div className={styles.quickReplyList}>
               {roomTypeQuickReplies.map((option) => (
@@ -513,6 +795,21 @@ function Chatbot() {
                   type="button"
                   className={styles.quickReplyBtn}
                   onClick={() => handleSpaceSizeSelect(option.label)}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {showFurnitureRecommendationQuickReplies && (
+            <div className={styles.quickReplyList}>
+              {furnitureRecommendationQuickReplies.map((option) => (
+                <button
+                  key={option.id}
+                  type="button"
+                  className={styles.quickReplyBtn}
+                  onClick={() => handleFurnitureRecommendationSelect(option.label)}
                 >
                   {option.label}
                 </button>
@@ -570,7 +867,7 @@ function Chatbot() {
                 className={styles.textInput}
                 value={input}
                 disabled={isTextInputDisabled}
-                onChange={(e) => setInput(e.target.value)}
+                onChange={(e) => handleInputChange(e.target.value)}
                 onKeyDown={(e) => {
                   if (isTextInputDisabled) {
                     e.preventDefault();
@@ -583,9 +880,18 @@ function Chatbot() {
                   }
                 }}
                 placeholder={
-                  isTextInputDisabled
-                    ? "라이프 스타일 버튼을 선택한 뒤 Enter를 눌러 주세요"
-                    : "메시지를 입력하세요"
+                  currentStage === "furnitureRecommendation"
+                    ? "아래 버튼을 선택해 주세요"
+                    : currentStage === "interiorStyle"
+                      ? "채팅창의 스타일 이미지를 선택해 주세요"
+                      : currentStage === "lifestyle"
+                        ? "라이프 스타일 버튼을 선택한 뒤 Enter를 눌러 주세요"
+                        : "메시지를 입력하세요"
+                }
+                inputMode={
+                  currentStage === "spaceSize" || currentStage === "budget"
+                    ? "numeric"
+                    : undefined
                 }
                 rows={1}
               />

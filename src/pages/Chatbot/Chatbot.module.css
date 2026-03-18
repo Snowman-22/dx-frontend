@@ -36,7 +36,7 @@
   min-height: 0;
   width: min(100%, 840px);
   margin: 0 auto;
-  padding: 28px 6px 32px;
+  padding: 28px 6px 100px;
   display: flex;
   flex-direction: column;
   gap: 24px;
@@ -49,12 +49,95 @@
 }
 
 .inputBar {
-  z-index: 2;
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 18px 0 27px;
+  padding: 0 0 56px;
   background: linear-gradient(180deg, rgba(243, 245, 239, 0) 0%, rgba(243, 245, 239, 0.82) 40%, rgba(243, 245, 239, 0.96) 100%);
+}
+
+.inputSection {
+  z-index: 2;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.ctaBar {
+  width: min(100%, 780px);
+  display: flex;
+  justify-content: center;
+  padding: 0 8px;
+}
+
+.recommendCtaBtn {
+  min-width: 220px;
+  padding: 14px 26px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #7acb78 0%, #63b962 100%);
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 700;
+  box-shadow: 0 16px 28px rgba(99, 185, 98, 0.24);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    filter 0.2s ease;
+}
+
+.recommendCtaBtn:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.02);
+  box-shadow: 0 18px 30px rgba(99, 185, 98, 0.28);
+}
+
+.quickReplyList {
+  width: min(100%, 780px);
+  position: relative;
+  z-index: 3;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px 8px;
+  padding: 0 8px 8px;
+}
+
+.quickReplyListFive {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px 8px;
+}
+
+.quickReplyBtn {
+  min-height: 34px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.86);
+  color: #557255;
+  box-shadow: 0 6px 14px rgba(183, 195, 175, 0.14);
+  font-size: 14px;
+  font-weight: 500;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.quickReplyBtn:hover {
+  background: #7acb78;
+  color: #ffffff;
+  box-shadow: 0 10px 18px rgba(122, 203, 120, 0.24);
+  transform: translateY(-1px);
+}
+
+.quickReplyBtnSelected {
+  background: #7acb78;
+  color: #ffffff;
+  box-shadow: 0 10px 18px rgba(122, 203, 120, 0.24);
 }
 
 .inputWrap {
@@ -66,7 +149,7 @@
   border: 1px solid rgba(228, 224, 217, 0.95);
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 10px 26px rgba(145, 155, 132, 0.14);
+  box-shadow: 0 12px 24px rgba(145, 155, 132, 0.16);
   backdrop-filter: blur(10px);
 }
 
@@ -74,6 +157,7 @@
 .sendBtn {
   width: 38px;
   height: 38px;
+  align-self: center;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -94,10 +178,14 @@
 .textInput {
   flex: 1;
   min-width: 0;
+  max-height: 126px;
   padding: 10px 2px;
   border: none;
   background: transparent;
+  resize: none;
+  overflow-y: hidden;
   font-size: 15px;
+  line-height: 1.45;
   font-family: inherit;
   outline: none;
   color: #314033;
@@ -105,6 +193,15 @@
 
 .textInput::placeholder {
   color: #bdb4a9;
+}
+
+.textInput::-webkit-scrollbar {
+  width: 6px;
+}
+
+.textInput::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(189, 180, 169, 0.55);
 }
 
 .sendBtn {
@@ -126,6 +223,267 @@
   background: #dbe8d4;
 }
 
+.modalOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 28px;
+  background: rgba(247, 249, 244, 0.58);
+  backdrop-filter: blur(8px);
+}
+
+.modalCard {
+  width: min(100%, 980px);
+  max-height: min(78vh, 680px);
+  overflow-y: auto;
+  padding: 26px 26px 22px;
+  border: 1px solid rgba(225, 232, 221, 0.95);
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 24px 64px rgba(113, 127, 104, 0.18);
+}
+
+.modalHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.modalEyebrow {
+  margin: 0 0 8px;
+  color: #8fa088;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+
+.applianceTabs {
+  display: flex;
+  align-items: flex-end;
+  gap: 22px;
+  margin-bottom: 18px;
+  padding-bottom: 2px;
+  border-bottom: 2px solid rgba(226, 232, 223, 0.9);
+}
+
+.applianceTabBtn {
+  position: relative;
+  padding: 0 2px 10px;
+  color: #d0d8cb;
+  font-size: 30px;
+  font-weight: 600;
+  line-height: 1;
+  transition: color 0.2s ease;
+}
+
+.applianceTabBtn::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -2px;
+  height: 4px;
+  border-radius: 999px;
+  background: transparent;
+}
+
+.applianceTabBtnActive {
+  color: #73cf74;
+}
+
+.applianceTabBtnActive::after {
+  background: #73cf74;
+}
+
+.modalTitle {
+  margin: 0;
+  color: #334235;
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.modalCloseBtn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  color: #8ea08d;
+  font-size: 28px;
+  line-height: 1;
+  background: rgba(239, 245, 236, 0.92);
+}
+
+.modalCloseBtn:hover {
+  background: rgba(227, 236, 222, 0.96);
+}
+
+.applianceGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(126px, 1fr));
+  gap: 14px;
+}
+
+.applianceCard {
+  position: relative;
+  min-height: 152px;
+  padding: 14px 12px 14px;
+  border: 1px solid rgba(224, 229, 223, 0.96);
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: #ffffff;
+  box-shadow: 0 8px 18px rgba(177, 189, 168, 0.1);
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.applianceCard:hover {
+  transform: translateY(-1px);
+  border-color: rgba(157, 204, 152, 0.95);
+  box-shadow: 0 12px 22px rgba(154, 177, 143, 0.14);
+}
+
+.applianceCardSelected {
+  border-color: rgba(122, 203, 120, 0.95);
+  background: linear-gradient(180deg, rgba(248, 255, 246, 0.98) 0%, rgba(239, 251, 236, 0.98) 100%);
+  box-shadow:
+    0 0 0 2px rgba(122, 203, 120, 0.18),
+    0 16px 28px rgba(122, 203, 120, 0.2);
+  transform: translateY(-2px);
+}
+
+.applianceCardDisabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.applianceCardDisabled:hover {
+  transform: none;
+  border-color: rgba(224, 229, 223, 0.96);
+  box-shadow: none;
+}
+
+.applianceImageWrap {
+  width: 100%;
+  height: 92px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(252, 252, 252, 1) 0%, rgba(246, 248, 244, 1) 100%);
+}
+
+.applianceCardSelected .applianceImageWrap {
+  background: linear-gradient(180deg, rgba(243, 255, 239, 1) 0%, rgba(226, 247, 220, 1) 100%);
+}
+
+.applianceImage {
+  max-width: 100%;
+  max-height: 88px;
+  object-fit: contain;
+  mix-blend-mode: multiply;
+  transition: transform 0.2s ease;
+}
+
+.applianceCardSelected .applianceImage {
+  transform: scale(1.04);
+}
+
+.applianceSelectionBadge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 7px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.92);
+  color: transparent;
+  font-size: 0;
+  box-shadow: 0 6px 12px rgba(122, 203, 120, 0.12);
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.applianceSelectionBadge::before {
+  content: "";
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(190, 204, 189, 0.72);
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.applianceCardSelected .applianceSelectionBadge {
+  background: #73cf74;
+  box-shadow: 0 10px 18px rgba(115, 207, 116, 0.28);
+  transform: scale(1.03);
+}
+
+.applianceCardSelected .applianceSelectionBadge::before {
+  width: 6px;
+  height: 12px;
+  border-radius: 0;
+  background: transparent;
+  border-right: 2px solid #ffffff;
+  border-bottom: 2px solid #ffffff;
+  transform: rotate(45deg) translate(-1px, -1px);
+}
+
+.applianceLabel {
+  color: #415042;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: center;
+  line-height: 1.3;
+  transition: color 0.2s ease, font-weight 0.2s ease;
+}
+
+.applianceCardSelected .applianceLabel {
+  color: #2e5a31;
+  font-weight: 700;
+}
+
+.modalFooter {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+.modalActionBtn {
+  min-width: 112px;
+  padding: 12px 20px;
+  border-radius: 999px;
+  background: #7acb78;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 600;
+  box-shadow: 0 12px 20px rgba(122, 203, 120, 0.22);
+}
+
+.modalActionBtn:hover {
+  background: #6bbb69;
+}
+
 @media (max-width: 900px) {
   .chatArea {
     padding: 28px 0 0;
@@ -134,10 +492,31 @@
   .messages {
     width: 100%;
     padding-top: 18px;
+    padding-bottom: 100px;
   }
 
   .inputWrap {
     width: 100%;
+  }
+
+  .quickReplyList {
+    width: 100%;
+  }
+
+  .ctaBar {
+    width: 100%;
+  }
+
+  .quickReplyListFive {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .modalOverlay {
+    padding: 18px;
+  }
+
+  .modalCard {
+    padding: 22px 18px 18px;
   }
 }
 
@@ -148,10 +527,34 @@
 
   .messages {
     gap: 18px;
-    padding-bottom: 20px;
+    padding-bottom: 100px;
+  }
+
+  .recommendCtaBtn {
+    width: 100%;
   }
 
   .inputWrap {
     padding-left: 12px;
+  }
+
+  .modalTitle {
+    font-size: 18px;
+  }
+
+  .applianceTabs {
+    gap: 16px;
+  }
+
+  .applianceTabBtn {
+    font-size: 22px;
+  }
+
+  .applianceGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .applianceCard {
+    min-height: 138px;
   }
 }

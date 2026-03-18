@@ -52,6 +52,246 @@
   line-height: 1.75;
 }
 
+.selectorBubble {
+  max-width: 720px;
+  padding: 18px;
+}
+
+.selectorGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.styleCard {
+  padding: 10px;
+  border: 1px solid rgba(221, 230, 216, 0.96);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.96);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-align: left;
+  box-shadow: 0 10px 20px rgba(171, 184, 162, 0.12);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.styleCard:hover:enabled {
+  transform: translateY(-2px);
+  border-color: rgba(126, 182, 120, 0.92);
+  box-shadow: 0 14px 24px rgba(126, 182, 120, 0.16);
+}
+
+.styleCard:disabled {
+  cursor: default;
+}
+
+.styleCardSelected {
+  border-color: rgba(122, 203, 120, 0.96);
+  box-shadow: 0 16px 28px rgba(122, 203, 120, 0.18);
+}
+
+.stylePreview {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  border-radius: 18px;
+  background: var(--wall-color, #efede7);
+}
+
+.previewWall,
+.previewAccent,
+.previewFrame,
+.previewFloor,
+.previewSofa,
+.previewTable,
+.previewPlant {
+  position: absolute;
+  display: block;
+}
+
+.previewWall {
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.26) 0%, rgba(255, 255, 255, 0) 38%),
+    var(--wall-color, #efede7);
+}
+
+.previewAccent {
+  top: 18%;
+  right: 14%;
+  width: 28%;
+  height: 28%;
+  border-radius: 16px;
+  border: 5px solid rgba(255, 255, 255, 0.7);
+  background: var(--accent-color, #d9d3cb);
+  box-shadow: 0 12px 20px rgba(63, 63, 63, 0.08);
+}
+
+.previewFrame {
+  top: 22%;
+  left: 12%;
+  width: 18%;
+  height: 26%;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.66);
+  border: 2px solid rgba(113, 113, 113, 0.12);
+}
+
+.previewFloor {
+  left: -6%;
+  right: -6%;
+  bottom: -2%;
+  height: 34%;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.18) 100%),
+    var(--floor-color, #d4c4b1);
+  transform: perspective(140px) rotateX(55deg);
+  transform-origin: bottom center;
+}
+
+.previewSofa {
+  left: 14%;
+  bottom: 22%;
+  width: 48%;
+  height: 20%;
+  border-radius: 18px 18px 10px 10px;
+  background: var(--sofa-color, #e0ddd6);
+  box-shadow: 0 10px 16px rgba(79, 79, 79, 0.1);
+}
+
+.previewSofa::before {
+  content: "";
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  top: 20%;
+  height: 40%;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.previewTable {
+  right: 14%;
+  bottom: 18%;
+  width: 18%;
+  height: 18%;
+  border-radius: 50%;
+  background: var(--table-color, #b19473);
+  box-shadow: 0 10px 14px rgba(80, 64, 45, 0.16);
+}
+
+.previewTable::before {
+  content: "";
+  position: absolute;
+  left: 44%;
+  bottom: -32%;
+  width: 12%;
+  height: 46%;
+  border-radius: 999px;
+  background: rgba(105, 85, 67, 0.72);
+}
+
+.previewPlant {
+  left: 8%;
+  bottom: 18%;
+  width: 12%;
+  height: 18%;
+  border-radius: 999px 999px 10px 10px;
+  background: var(--plant-color, #8ea575);
+}
+
+.previewPlant::before,
+.previewPlant::after {
+  content: "";
+  position: absolute;
+  bottom: 52%;
+  width: 70%;
+  height: 80%;
+  border-radius: 999px 999px 0 999px;
+  background: var(--plant-leaf-color, #9db887);
+}
+
+.previewPlant::before {
+  left: -22%;
+  transform: rotate(-28deg);
+}
+
+.previewPlant::after {
+  right: -18%;
+  transform: rotate(26deg);
+}
+
+.styleLabel {
+  color: #425240;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.previewModernMinimal {
+  --wall-color: #ebe7e0;
+  --floor-color: #cab8a3;
+  --accent-color: #d7d1c9;
+  --sofa-color: #d9d6d0;
+  --table-color: #85786a;
+  --plant-color: #8ca18b;
+  --plant-leaf-color: #98b197;
+}
+
+.previewNaturalWood {
+  --wall-color: #efe6d6;
+  --floor-color: #b68f64;
+  --accent-color: #d9c19a;
+  --sofa-color: #ddd0bb;
+  --table-color: #936841;
+  --plant-color: #80996b;
+  --plant-leaf-color: #98b17f;
+}
+
+.previewVintageRetro {
+  --wall-color: #d7c5bc;
+  --floor-color: #8c654e;
+  --accent-color: #c8895f;
+  --sofa-color: #a66e58;
+  --table-color: #6d4736;
+  --plant-color: #7e775f;
+  --plant-leaf-color: #938a6b;
+}
+
+.previewNordicScandi {
+  --wall-color: #edf1ee;
+  --floor-color: #dbcba9;
+  --accent-color: #d3ddd6;
+  --sofa-color: #d7dfdb;
+  --table-color: #9c8467;
+  --plant-color: #8ca68e;
+  --plant-leaf-color: #9fbaa1;
+}
+
+.previewProvenceRomantic {
+  --wall-color: #f2e4e7;
+  --floor-color: #d6c0aa;
+  --accent-color: #d8becf;
+  --sofa-color: #e5d7de;
+  --table-color: #9d7b70;
+  --plant-color: #9ea885;
+  --plant-leaf-color: #aeb68f;
+}
+
+.previewClassicAntique {
+  --wall-color: #ddd4c8;
+  --floor-color: #7c5a43;
+  --accent-color: #b9aa92;
+  --sofa-color: #bca58d;
+  --table-color: #5f4634;
+  --plant-color: #7d8360;
+  --plant-leaf-color: #969b74;
+}
+
 .bubbleUser {
   margin-left: auto;
   padding: 13px 24px;
@@ -83,8 +323,18 @@
     padding: 16px 18px;
   }
 
+  .selectorBubble {
+    max-width: calc(100vw - 110px);
+    padding: 14px;
+  }
+
   .bubbleUser {
     max-width: min(100%, 240px);
     padding: 12px 18px;
+  }
+
+  .selectorGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
   }
 }

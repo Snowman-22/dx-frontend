@@ -200,7 +200,11 @@ function SubCard({ product }: { product: SubscriptionProduct }) {
         <button className={styles.wishBtn} title="찜하기">
           <FiHeart size={18} />
         </button>
-        <span className={styles.imagePlaceholder}>제품 이미지</span>
+        {product.imageUrl ? (
+          <img src={product.imageUrl} alt={product.name} className={styles.cardImg} />
+        ) : (
+          <span className={styles.imagePlaceholder}>제품 이미지</span>
+        )}
       </div>
 
       {/* 바디 */}

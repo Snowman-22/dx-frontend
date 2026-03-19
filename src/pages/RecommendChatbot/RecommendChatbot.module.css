@@ -2,6 +2,7 @@
   position: relative;
   --chatbot-reserve-width: 0px;
   --chatbot-gap: 8px;
+  --product-grid-columns: 5;
   min-height: 100vh;
   background:
     radial-gradient(circle at right center, rgba(210, 236, 218, 0.44) 0%, rgba(210, 236, 218, 0) 32%),
@@ -10,6 +11,7 @@
 
 .pageChatOpen {
   --chatbot-reserve-width: 610px;
+  --product-grid-columns: 4;
 }
 
 .leftPane {
@@ -186,7 +188,7 @@
 
 .productGrid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(var(--product-grid-columns), minmax(0, 1fr));
   gap: 22px 18px;
 }
 

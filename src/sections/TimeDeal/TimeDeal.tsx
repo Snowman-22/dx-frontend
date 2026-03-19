@@ -10,6 +10,8 @@ const PRODUCTS = [
     discountRate: "15%",
     price: "2,101,800",
     badge: "닷컴 ONLY",
+    imageUrl:
+      "https://www.lge.co.kr/kr/images/notebook/md10744830/md10744830-280x280.jpg",
   },
   {
     id: 2,
@@ -19,6 +21,8 @@ const PRODUCTS = [
     discountRate: null,
     price: "809,100",
     badge: null,
+    imageUrl:
+      "https://www.lge.co.kr/kr/images/dishwashers/md10645836/md10645836-280x280.jpg",
   },
   {
     id: 3,
@@ -28,6 +32,8 @@ const PRODUCTS = [
     discountRate: "20%",
     price: "1,512,000",
     badge: "닷컴 ONLY",
+    imageUrl:
+      "https://www.lge.co.kr/kr/images/tvs/md10319945/md10319945-280x280.jpg",
   },
 ];
 
@@ -50,9 +56,11 @@ function TimeDeal() {
                 {product.badge && (
                   <span className={styles.badge}>{product.badge}</span>
                 )}
-                <div className={styles.imagePlaceholder}>
-                  <span>제품 이미지</span>
-                </div>
+                <img
+                  src={product.imageUrl}
+                  alt={product.name}
+                  className={styles.productImage}
+                />
               </div>
               <div className={styles.info}>
                 <h3 className={styles.productName}>{product.name}</h3>

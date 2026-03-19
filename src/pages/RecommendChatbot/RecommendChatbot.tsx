@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { FiArrowUp, FiChevronDown, FiHome, FiPlus, FiShoppingCart } from "react-icons/fi";
+import { useNavigate } from "react-router-dom";
 import chatbotIcon from "../../assets/images/chatbot_icon.png";
 import airPurifierImage from "../../assets/images/lg_appliances/Air_Purifier.avif";
 import clothingCareImage from "../../assets/images/lg_appliances/Clothing_Care.avif";
@@ -290,9 +291,11 @@ const getTotalPrice = (items: RecommendItem[]) =>
   items.reduce((sum, item) => sum + item.price, 0);
 
 function RecommendChatbot() {
+  const navigate = useNavigate();
   const [isChatOpen, setIsChatOpen] = useState(true);
   const [chatInputValue, setChatInputValue] = useState("");
   const [expandedPackages, setExpandedPackages] = useState<Record<string, boolean>>({});
+  const collapsedApplianceLimit = isChatOpen ? 4 : 5;
 
   const handleChatSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -350,7 +353,7 @@ function RecommendChatbot() {
               );
               const visibleApplianceItems = isExpanded
                 ? applianceItems
-                : applianceItems.slice(0, 4);
+                : applianceItems.slice(0, collapsedApplianceLimit);
               const hasMoreItems =
                 furnitureItems.length > 0 || applianceItems.length > visibleApplianceItems.length;
 
@@ -470,7 +473,19 @@ function RecommendChatbot() {
                       </p>
                     ) : null}
                     <div className={styles.packageActions}>
-                      <button type="button" className={`${styles.packageActionBtn} ${styles.packageActionPrimary}`}>
+                      <button
+                        type="button"
+                        className={`${styles.packageActionBtn} ${styles.packageActionPrimary}`}
+                        onClick={() =>
+                          navigate("/simulation", {
+                            state: {
+                              packageTitle: recommendPackage.title,
+                              packageTypeLabel: recommendPackage.typeLabel,
+                              itemCount: recommendPackage.items.length,
+                            },
+                          })
+                        }
+                      >
                         <FiHome size={16} />
                         <span>배치보기</span>
                       </button>

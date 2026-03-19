@@ -109,6 +109,14 @@
   font-size: 16px;
 }
 
+.slideImage {
+  width: 100%;
+  max-width: 500px;
+  height: 360px;
+  object-fit: contain;
+  border-radius: 12px;
+}
+
 .arrowLeft,
 .arrowRight {
   position: absolute;

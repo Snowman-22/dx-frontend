@@ -25,6 +25,8 @@ const PRODUCTS = [
     discountRate: "26%",
     price: "1,134,600",
     badge: "닷컴 ONLY",
+    imageUrl:
+      "https://www.lge.co.kr/kr/images/refrigerators/md10559863/md10559863-280x280.jpg",
   },
   {
     id: 2,
@@ -35,6 +37,8 @@ const PRODUCTS = [
     discountRate: "29%",
     price: "119,000",
     badge: null,
+    imageUrl:
+      "https://www.lge.co.kr/kr/images/microwaves-and-ovens/md10101826/md10101826-280x280.jpg",
   },
   {
     id: 3,
@@ -45,6 +49,8 @@ const PRODUCTS = [
     discountRate: null,
     price: "1,134,600",
     badge: null,
+    imageUrl:
+      "https://www.lge.co.kr/kr/images/stan-by-me/md10519833/md10519833-280x280.jpg",
   },
 ];
 
@@ -86,9 +92,11 @@ function BestRanking() {
                 {product.badge && (
                   <span className={styles.badge}>{product.badge}</span>
                 )}
-                <div className={styles.imagePlaceholder}>
-                  <span>제품 이미지</span>
-                </div>
+                <img
+                  src={product.imageUrl}
+                  alt={product.name}
+                  className={styles.productImage}
+                />
               </div>
               <div className={styles.info}>
                 <h3 className={styles.productName}>{product.name}</h3>

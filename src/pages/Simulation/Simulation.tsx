@@ -1,6 +1,17 @@
-import { useState } from "react";
-import { FiArrowLeft, FiCheck, FiLayers } from "react-icons/fi";
+import { useState, type FormEvent } from "react";
+import {
+  FiArrowLeft,
+  FiArrowUp,
+  FiBox,
+  FiCheck,
+  FiChevronDown,
+  FiLayers,
+  FiPlus,
+  FiRefreshCw,
+  FiShoppingCart,
+} from "react-icons/fi";
 import { useLocation, useNavigate } from "react-router-dom";
+import chatbotIcon from "../../assets/images/chatbot_icon.png";
 import snowLogo from "../../assets/images/snow_logo.png";
 import styles from "./Simulation.module.css";
 
@@ -15,6 +26,8 @@ type FloorPlanOption = {
   name: string;
   caption: string;
 };
+
+type SimulationTab = "floor2d" | "image3d" | "cart";
 
 const FLOOR_PLAN_OPTIONS: FloorPlanOption[] = [
   {
@@ -34,17 +47,48 @@ const FLOOR_PLAN_OPTIONS: FloorPlanOption[] = [
   },
 ];
 
+const TAB_COPY: Record<SimulationTab, { label: string; description: string }> = {
+  floor2d: {
+    label: "2D 평면도",
+    description: "도면 기준으로 가전과 공간 배치를 먼저 확인할 수 있어요.",
+  },
+  image3d: {
+    label: "3D 이미지",
+    description: "실제 연출에 가까운 장면형 미리보기 자리입니다.",
+  },
+  cart: {
+    label: "장바구니",
+    description: "선택한 패키지 상품과 요약 정보를 모아보는 자리입니다.",
+  },
+};
+
+const CART_ITEMS = [
+  { name: "오브제 냉장고", category: "주방 가전", price: "월 58,900원" },
+  { name: "오브제 식기세척기", category: "주방 가전", price: "월 31,900원" },
+  { name: "오브제 정수기", category: "생활 가전", price: "월 27,900원" },
+];
+
 function Simulation() {
   const navigate = useNavigate();
   const location = useLocation();
   const state = (location.state as SimulationState | null) ?? null;
   const [isModalOpen, setIsModalOpen] = useState(true);
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [chatInputValue, setChatInputValue] = useState("");
+  const [activeTab, setActiveTab] = useState<SimulationTab>("floor2d");
   const [selectedPlanId, setSelectedPlanId] = useState<string | null>(
     FLOOR_PLAN_OPTIONS[0]?.id ?? null,
   );
 
   const selectedPlan =
     FLOOR_PLAN_OPTIONS.find((option) => option.id === selectedPlanId) ?? FLOOR_PLAN_OPTIONS[0];
+
+  const handleChatSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setChatInputValue((prev) => prev.trim());
+  };
+
+  const tabMeta = TAB_COPY[activeTab];
 
   return (
     <div className={styles.page}>
@@ -97,24 +141,124 @@ function Simulation() {
 
         <main className={styles.canvasCard}>
           <div className={styles.canvasHeader}>
-            <div>
-              <span className={styles.canvasLabel}>시뮬레이션 영역</span>
-              <h2 className={styles.canvasTitle}>배치 미리보기</h2>
+            <div className={styles.canvasHeaderLeft}>
+              <div className={styles.tabList} role="tablist" aria-label="시뮬레이션 보기 선택">
+                {(
+                  [
+                    ["floor2d", "2D 평면도"],
+                    ["image3d", "3D 이미지"],
+                    ["cart", "장바구니"],
+                  ] as const
+                ).map(([tabId, label]) => {
+                  const isActive = activeTab === tabId;
+
+                  return (
+                    <button
+                      key={tabId}
+                      type="button"
+                      role="tab"
+                      aria-selected={isActive}
+                      className={`${styles.tabButton} ${isActive ? styles.tabButtonActive : ""}`}
+                      onClick={() => setActiveTab(tabId)}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className={styles.tabDescription}>{tabMeta.description}</p>
             </div>
-            <div className={styles.canvasStatus}>
-              <span className={styles.statusDot} />
-              <span>도면 데이터 연결 전</span>
+
+            <div className={styles.canvasHeaderActions}>
+              <button type="button" className={styles.headerActionBtn}>
+                <FiRefreshCw size={16} />
+                <span>다시 추천받기</span>
+              </button>
+              <button type="button" className={styles.headerActionBtn}>
+                <FiBox size={16} />
+                <span>3D 변환하기</span>
+              </button>
+              <button
+                type="button"
+                className={`${styles.headerActionBtn} ${styles.headerActionPrimary}`}
+              >
+                <FiShoppingCart size={16} />
+                <span>장바구니 담기</span>
+              </button>
+              <div className={styles.canvasStatus}>
+                <span className={styles.statusDot} />
+                <span>도면 데이터 연결 전</span>
+              </div>
             </div>
           </div>
 
           <div className={styles.canvasArea}>
-            <div className={styles.roomFrame}>
-              <div className={`${styles.zoneCard} ${styles.zoneLiving}`}>거실 영역</div>
-              <div className={`${styles.zoneCard} ${styles.zoneKitchen}`}>주방 영역</div>
-              <div className={`${styles.zoneCard} ${styles.zoneBedroom}`}>침실 영역</div>
-              <div className={`${styles.zoneCard} ${styles.zoneEntry}`}>현관 영역</div>
-              <div className={styles.planWatermark}>{selectedPlan?.name}</div>
-            </div>
+            {activeTab === "floor2d" ? (
+              <div className={styles.roomFrame}>
+                <div className={`${styles.zoneCard} ${styles.zoneLiving}`}>거실 영역</div>
+                <div className={`${styles.zoneCard} ${styles.zoneKitchen}`}>주방 영역</div>
+                <div className={`${styles.zoneCard} ${styles.zoneBedroom}`}>침실 영역</div>
+                <div className={`${styles.zoneCard} ${styles.zoneEntry}`}>현관 영역</div>
+                <div className={styles.planWatermark}>{selectedPlan?.name}</div>
+              </div>
+            ) : null}
+
+            {activeTab === "image3d" ? (
+              <div className={styles.preview3D}>
+                <div className={styles.preview3DScene}>
+                  <div className={styles.preview3DGlow} aria-hidden="true" />
+                  <div className={styles.preview3DCardMain}>
+                    <span>3D 이미지 자리</span>
+                  </div>
+                  <div className={styles.preview3DCardSide}>가전 배치</div>
+                  <div className={styles.preview3DCardBottom}>가구 연출</div>
+                </div>
+                <div className={styles.preview3DInfo}>
+                  <span className={styles.preview3DBadge}>PREVIEW</span>
+                  <strong>{selectedPlan?.name} 기준 장면형 미리보기</strong>
+                  <p>
+                    실제 렌더링 데이터가 연결되면 여기에서 공간 분위기와 배치 결과를 3D 이미지 형태로
+                    보여줄 수 있어요.
+                  </p>
+                </div>
+              </div>
+            ) : null}
+
+            {activeTab === "cart" ? (
+              <div className={styles.cartView}>
+                <div className={styles.cartList}>
+                  {CART_ITEMS.map((item) => (
+                    <div key={item.name} className={styles.cartItem}>
+                      <div className={styles.cartItemThumb} />
+                      <div className={styles.cartItemContent}>
+                        <strong>{item.name}</strong>
+                        <span>{item.category}</span>
+                      </div>
+                      <div className={styles.cartItemPrice}>{item.price}</div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className={styles.cartSummary}>
+                  <span className={styles.cartSummaryLabel}>장바구니 요약</span>
+                  <strong className={styles.cartSummaryTitle}>
+                    {state?.packageTitle ?? "추천 패키지"} 구성
+                  </strong>
+                  <p className={styles.cartSummaryText}>
+                    실제 상품 데이터 연결 전 단계라서, 현재는 구성 예시와 요약 정보 자리만 먼저
+                    배치해두었습니다.
+                  </p>
+                  <div className={styles.cartSummaryRow}>
+                    <span>예상 월 납부액</span>
+                    <strong>월 118,700원</strong>
+                  </div>
+                  <div className={styles.cartSummaryRow}>
+                    <span>선택 상품 수</span>
+                    <strong>{state?.itemCount ?? 0}개</strong>
+                  </div>
+                </div>
+              </div>
+            ) : null}
           </div>
         </main>
       </section>
@@ -181,6 +325,67 @@ function Simulation() {
           </div>
         </div>
       ) : null}
+
+      <div className={styles.floatingChatbot}>
+        {isChatOpen ? (
+          <div className={styles.chatPanel}>
+            <div className={styles.chatPanelHeader}>
+              <div className={styles.chatPanelTitle}>챗봇</div>
+              <button
+                type="button"
+                className={styles.chatCollapseBtn}
+                aria-label="챗봇 닫기"
+                onClick={() => setIsChatOpen(false)}
+              >
+                <FiChevronDown size={20} />
+              </button>
+            </div>
+
+            <div className={styles.chatMessages}>
+              <div className={styles.chatRow}>
+                <div className={styles.chatAvatar}>
+                  <img src={snowLogo} alt="챗봇 아이콘" className={styles.chatAvatarImage} />
+                </div>
+                <div className={styles.chatBubble}>
+                  선택한 도면도 위에서 배치 시뮬레이션을 이어갈 수 있어요.
+                  <br />
+                  지금은 챗봇 패널이 화면을 덮는 방식으로 올라오고, 시뮬레이션 레이아웃은 그대로
+                  유지됩니다.
+                  <br />
+                  이후 실제 데이터가 연결되면 배치 추천 흐름을 여기서 계속 확장할 수 있어요.
+                </div>
+              </div>
+            </div>
+
+            <form className={styles.chatInputBar} onSubmit={handleChatSubmit}>
+              <div className={styles.chatInputWrap}>
+                <button type="button" className={styles.chatIconBtn} aria-label="추가">
+                  <FiPlus size={20} />
+                </button>
+                <input
+                  className={styles.chatInput}
+                  value={chatInputValue}
+                  onChange={(event) => setChatInputValue(event.target.value)}
+                  placeholder="궁금한 배치 조건이나 요청을 입력해 주세요"
+                  aria-label="추가 질문 입력"
+                />
+                <button type="submit" className={styles.chatSendBtn} aria-label="전송">
+                  <FiArrowUp size={18} />
+                </button>
+              </div>
+            </form>
+          </div>
+        ) : (
+          <button
+            type="button"
+            className={styles.chatToggleBtn}
+            aria-label="챗봇 열기"
+            onClick={() => setIsChatOpen(true)}
+          >
+            <img src={chatbotIcon} alt="" className={styles.chatToggleIcon} aria-hidden="true" />
+          </button>
+        )}
+      </div>
     </div>
   );
 }

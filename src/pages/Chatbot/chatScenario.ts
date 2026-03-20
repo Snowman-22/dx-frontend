@@ -38,6 +38,18 @@ interface QuickReplyOption {
   label: string;
 }
 
+interface LifestyleOption {
+  id: string;
+  label: string;
+}
+
+export interface LifestyleCategory {
+  id: string;
+  title: string;
+  page: 1 | 2;
+  options: LifestyleOption[];
+}
+
 export interface InteriorStyleOption {
   id: string;
   label: string;
@@ -74,9 +86,9 @@ interface ChatScenario {
     roomType: QuickReplyOption[];
     spaceSize: QuickReplyOption[];
     furnitureRecommendation: QuickReplyOption[];
-    lifestyle: QuickReplyOption[];
     budget: QuickReplyOption[];
   };
+  lifestyleCategories: LifestyleCategory[];
   interiorStyleOptions: InteriorStyleOption[];
   applianceOptions: ApplianceOption[];
   followUpMessages: {
@@ -211,18 +223,6 @@ export const CHATBOT_SCENARIO: ChatScenario = {
       { id: "yes", label: "네! 추천 해주세요" },
       { id: "no", label: "아직 필요 없어요" },
     ],
-    lifestyle: [
-      { id: "minimal", label: "미니멀 자취" },
-      { id: "emotional", label: "감성 자취방" },
-      { id: "space", label: "공간 활용 중요" },
-      { id: "simple-cooking", label: "간단 요리 선호" },
-      { id: "pets", label: "반려동물과 함께" },
-      { id: "homebody", label: "주말 집콕러" },
-      { id: "remote-work", label: "재택 많음" },
-      { id: "home-cafe", label: "홈카페 자취" },
-      { id: "value", label: "가성비 중시" },
-      { id: "efficiency", label: "에너지 효율 중요" },
-    ],
     budget: [
       { id: "under-50", label: "50만 원 이하" },
       { id: "50-to-150", label: "50 ~ 150만 원" },
@@ -230,6 +230,74 @@ export const CHATBOT_SCENARIO: ChatScenario = {
       { id: "over-300", label: "300만원 이상" },
     ],
   },
+  lifestyleCategories: [
+    {
+      id: "space-structure",
+      title: "🏠 공간 / 구조",
+      page: 1,
+      options: [
+        { id: "space-efficiency", label: "공간 활용이 중요해요" },
+        { id: "large-products", label: "큰 제품도 괜찮아요" },
+        { id: "extra-storage", label: "수납이 넉넉했으면 좋겠어요" },
+      ],
+    },
+    {
+      id: "price-consumption",
+      title: "💰 가격 / 소비 성향",
+      page: 1,
+      options: [
+        { id: "value-for-money", label: "가성비가 중요해요" },
+        { id: "discount-benefits", label: "할인 혜택이 중요해요" },
+        { id: "satisfaction-first", label: "가격보다 만족도가 중요해요" },
+        { id: "premium-consideration", label: "프리미엄 제품도 고려해요" },
+      ],
+    },
+    {
+      id: "usage-pattern",
+      title: "🍳 사용 패턴",
+      page: 1,
+      options: [
+        { id: "simple-cooking", label: "간단 요리를 자주 해요" },
+        { id: "home-time", label: "집에서 보내는 시간이 많아요" },
+        { id: "work-from-home", label: "집에서 일하는 시간이 많아요" },
+      ],
+    },
+    {
+      id: "care-convenience",
+      title: "🧼 관리 / 편의",
+      page: 2,
+      options: [
+        { id: "easy-cleaning", label: "청소와 관리가 쉬운 게 좋아요" },
+        { id: "ai-automation", label: "자동화 기능(AI)이 필요해요" },
+        { id: "easy-to-use", label: "사용이 쉬운 제품이 좋아요" },
+        { id: "low-noise", label: "소음이 적은 제품이 좋아요" },
+      ],
+    },
+    {
+      id: "value-function",
+      title: "🌿 가치 / 기능",
+      page: 2,
+      options: [
+        { id: "energy-efficiency", label: "에너지 효율이 중요해요" },
+        { id: "eco-material", label: "친환경 소재를 선호해요" },
+      ],
+    },
+    {
+      id: "style-mood",
+      title: "🎨 스타일 / 감성",
+      page: 2,
+      options: [
+        { id: "natural-wood-style", label: "내추럴/우드 스타일이 좋아요" },
+        { id: "bright-white-tone", label: "화이트/밝은 톤이 좋아요" },
+      ],
+    },
+    {
+      id: "life-factor",
+      title: "🐶 라이프 요소",
+      page: 2,
+      options: [{ id: "with-pets", label: "반려동물과 함께 살아요" }],
+    },
+  ],
   interiorStyleOptions: [
     { id: "modern-minimal", label: "모던/미니멀" },
     { id: "natural-wood", label: "내추럴/우드" },
@@ -283,8 +351,9 @@ export const CHATBOT_SCENARIO: ChatScenario = {
     interiorStylePrompt: `선호하는 인테리어 스타일을 선택해 주세요!
 아래 이미지를 참고하여 선택하시면 더 정확한 추천이 가능합니다.`,
     interiorStyleSelectedMessage: "고객님의 인테리어 정보를 기억하겠습니다!",
-    lifestylePrompt: `고객님의 소중한 일상을 더 빛나게 해줄 가구와 가전을 골라드릴게요! ✨
-아래 선택지에서 고객님의 라이프 스타일을 골라주세요!`,
+    lifestylePrompt: `이제 생활 방식과 취향을 조금 더 세밀하게 반영해볼게요.
+잠시 후 열리는 선택 창에서 해당되는 항목을 자유롭게 골라주세요.
+선택하고 싶은 항목이 없다면 그대로 넘어가셔도 괜찮아요!`,
     lifestyleSelected: {
       id: "lifestyle-selected",
       description: "라이프스타일 선택 후 안내 문구",
@@ -351,8 +420,8 @@ export function getSpaceSizeInvalidMessage(): string {
   return CHATBOT_SCENARIO.followUpMessages.spaceSizeInvalidMessage;
 }
 
-export function getLifestyleQuickReplies(): QuickReplyOption[] {
-  return CHATBOT_SCENARIO.quickReplies.lifestyle;
+export function getLifestyleCategories(): LifestyleCategory[] {
+  return CHATBOT_SCENARIO.lifestyleCategories;
 }
 
 export function getBudgetQuickReplies(): QuickReplyOption[] {
@@ -433,10 +502,8 @@ export function getInteriorStyleSelectedMessage(): string {
 }
 
 export function getLifestyleSelectionMessage(selectedStyles: string[]): string {
-  return CHATBOT_SCENARIO.followUpMessages.lifestyleSelected.template.replace(
-    "{selectedStyles}",
-    selectedStyles.join(", "),
-  );
+  void selectedStyles;
+  return "사용자의 취향을 파악 완료했습니다!";
 }
 
 export function getBudgetPromptMessage(): string {

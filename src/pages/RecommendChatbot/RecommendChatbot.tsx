@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { FiArrowUp, FiChevronDown, FiHome, FiPlus, FiShoppingCart } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import chatbotIcon from "../../assets/images/chatbot_icon.png";
@@ -12,24 +12,71 @@ import washingMachineImage from "../../assets/images/lg_appliances/Washing_Machi
 import waterPurifierImage from "../../assets/images/lg_appliances/Water_Purifier.avif";
 import styles from "./RecommendChatbot.module.css";
 
-type RecommendItem = {
-  itemType: "appliance" | "furniture";
+type RecommendAppliance = {
+  name: string;
+  category: string;
+  totalPrice: number;
+  subscriptionPrice: number;
   image: string;
+  productUrl: string;
+  popularityScore: number;
+};
+
+type RecommendFurniture = {
   name: string;
   category: string;
   price: number;
-  subscriptionPrice?: number;
+  image: string;
   productUrl: string;
 };
 
 type RecommendPackage = {
   title: string;
   typeLabel: string;
-  items: RecommendItem[];
-  recommendationMessage: string;
+  appliances: RecommendAppliance[];
+  furniture: RecommendFurniture[];
+  recommendationReason: string;
 };
 
+type RecommendPackagesResponse = readonly [
+  RecommendPackage,
+  RecommendPackage,
+  RecommendPackage,
+];
+
+type BackendRecommendPackagesPayload = {
+  packages: RecommendPackagesResponse;
+};
+
+type ChatMessage = {
+  id: string;
+  role: "assistant" | "user";
+  text: string;
+};
+
+type PackageSortType = "default" | "price" | "popularity";
+
 const formatPrice = (price: number) => `${price.toLocaleString("ko-KR")}원`;
+
+const getPackageTotalPrice = (recommendPackage: RecommendPackage) =>
+  recommendPackage.appliances.reduce((sum, item) => sum + item.totalPrice, 0) +
+  recommendPackage.furniture.reduce((sum, item) => sum + item.price, 0);
+
+const getPackageItemCount = (recommendPackage: RecommendPackage) =>
+  recommendPackage.appliances.length + recommendPackage.furniture.length;
+
+const getPackagePopularityScore = (recommendPackage: RecommendPackage) => {
+  if (recommendPackage.appliances.length === 0) {
+    return 0;
+  }
+
+  const totalScore = recommendPackage.appliances.reduce(
+    (sum, item) => sum + item.popularityScore,
+    0,
+  );
+
+  return totalScore / recommendPackage.appliances.length;
+};
 
 const createFurnitureImage = (fill: string, accent: string, shape: string) =>
   `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
@@ -88,218 +135,265 @@ const sofaImage = createFurnitureImage(
   `,
 );
 
-const RECOMMEND_PACKAGES: RecommendPackage[] = [
+const BACKEND_RECOMMEND_PACKAGE_PAYLOAD: BackendRecommendPackagesPayload = {
+  packages: [
+    {
+      title: "추천 패키지 1",
+      typeLabel: "FLEX TYPE",
+      appliances: [
+        {
+          name: "LG 디오스 인덕션",
+          category: "주방 가전",
+          totalPrice: 1711200,
+          subscriptionPrice: 36100,
+          image: inductionImage,
+          productUrl: "",
+          popularityScore: 94,
+        },
+        {
+          name: "LG 오브제컬렉션 냉장고",
+          category: "주방 가전",
+          totalPrice: 2890000,
+          subscriptionPrice: 58900,
+          image: refrigeratorImage,
+          productUrl: "",
+          popularityScore: 97,
+        },
+        {
+          name: "LG 디오스 식기세척기",
+          category: "주방 가전",
+          totalPrice: 1540000,
+          subscriptionPrice: 31900,
+          image: dishwasherImage,
+          productUrl: "",
+          popularityScore: 88,
+        },
+        {
+          name: "LG 퓨리케어 정수기",
+          category: "생활 가전",
+          totalPrice: 1290000,
+          subscriptionPrice: 27900,
+          image: waterPurifierImage,
+          productUrl: "",
+          popularityScore: 91,
+        },
+      ],
+      furniture: [
+        {
+          name: "Eclisse 4colors",
+          category: "조명",
+          price: 396000,
+          image: lampImage,
+          productUrl: "",
+        },
+        {
+          name: "Tizio",
+          category: "조명",
+          price: 765000,
+          image: deskLampImage,
+          productUrl: "",
+        },
+        {
+          name: "와플 거실 슬리퍼",
+          category: "생활 소품",
+          price: 10100,
+          image: slipperImage,
+          productUrl: "",
+        },
+        {
+          name: "모듈 패브릭 소파",
+          category: "거실 가구",
+          price: 1342500,
+          image: sofaImage,
+          productUrl: "",
+        },
+      ],
+      recommendationReason:
+        "주방 동선과 기본 생활 가전을 먼저 구성하고, 공간 분위기를 살려주는 조명과 소품까지 함께 제안한 조합입니다.",
+    },
+    {
+      title: "추천 패키지 2",
+      typeLabel: "TYPE",
+      appliances: [
+        {
+          name: "LG 트롬 세탁기",
+          category: "세탁 가전",
+          totalPrice: 1980000,
+          subscriptionPrice: 42900,
+          image: washingMachineImage,
+          productUrl: "",
+          popularityScore: 92,
+        },
+        {
+          name: "LG 스타일러",
+          category: "의류 관리기",
+          totalPrice: 1760000,
+          subscriptionPrice: 38900,
+          image: clothingCareImage,
+          productUrl: "",
+          popularityScore: 86,
+        },
+        {
+          name: "LG 퓨리케어 공기청정기",
+          category: "공기 관리",
+          totalPrice: 990000,
+          subscriptionPrice: 22100,
+          image: airPurifierImage,
+          productUrl: "",
+          popularityScore: 89,
+        },
+      ],
+      furniture: [
+        {
+          name: "코지 라운지 체어",
+          category: "리빙 체어",
+          price: 689000,
+          image: sofaImage,
+          productUrl: "",
+        },
+        {
+          name: "무드 테이블 램프",
+          category: "조명",
+          price: 129000,
+          image: lampImage,
+          productUrl: "",
+        },
+      ],
+      recommendationReason:
+        "의류 관리와 공기 관리에 집중한 가전 구성에 휴식감을 더해 주는 가구를 조합해 생활 만족도를 높이도록 구성했습니다.",
+    },
+    {
+      title: "추천 패키지 3",
+      typeLabel: "FLEX TYPE",
+      appliances: [
+        {
+          name: "LG 디오스 인덕션",
+          category: "주방 가전",
+          totalPrice: 1711200,
+          subscriptionPrice: 36100,
+          image: inductionImage,
+          productUrl: "",
+          popularityScore: 94,
+        },
+        {
+          name: "LG 디오스 식기세척기",
+          category: "주방 가전",
+          totalPrice: 1540000,
+          subscriptionPrice: 31900,
+          image: dishwasherImage,
+          productUrl: "",
+          popularityScore: 88,
+        },
+        {
+          name: "LG 오브제컬렉션 냉장고",
+          category: "주방 가전",
+          totalPrice: 2890000,
+          subscriptionPrice: 58900,
+          image: refrigeratorImage,
+          productUrl: "",
+          popularityScore: 97,
+        },
+        {
+          name: "LG 스타일러",
+          category: "의류 관리기",
+          totalPrice: 1760000,
+          subscriptionPrice: 38900,
+          image: clothingCareImage,
+          productUrl: "",
+          popularityScore: 86,
+        },
+        {
+          name: "LG 퓨리케어 공기청정기",
+          category: "공기 관리",
+          totalPrice: 990000,
+          subscriptionPrice: 22100,
+          image: airPurifierImage,
+          productUrl: "",
+          popularityScore: 89,
+        },
+      ],
+      furniture: [
+        {
+          name: "패브릭 슬리퍼",
+          category: "생활 소품",
+          price: 18900,
+          image: slipperImage,
+          productUrl: "",
+        },
+        {
+          name: "아틀리에 데스크 램프",
+          category: "조명",
+          price: 239000,
+          image: deskLampImage,
+          productUrl: "",
+        },
+      ],
+      recommendationReason:
+        "주방과 생활 가전을 균형 있게 구성하고, 조명과 소품으로 공간 인상을 부드럽게 보완한 패키지입니다.",
+    },
+  ],
+};
+
+const INITIAL_CHAT_MESSAGES: ChatMessage[] = [
   {
-    title: "추천 패키지 1",
-    typeLabel: "FLEX TYPE",
-    recommendationMessage:
-      "추천사유: 조리와 정리에 필요한 핵심 가전을 먼저 담고, 공간 분위기를 살려줄 가구와 소품을 함께 추천했어요. 기본 생활 동선은 더 편해지고, 공간은 더 따뜻하고 균형감 있게 완성할 수 있어요.",
-    items: [
-      {
-        itemType: "appliance",
-        image: inductionImage,
-        name: "LG 디오스 인덕션",
-        category: "1등급 미라듀어",
-        price: 1711200,
-        subscriptionPrice: 36100,
-        productUrl: "",
-      },
-      {
-        itemType: "appliance",
-        image: refrigeratorImage,
-        name: "LG 오브제 냉장고",
-        category: "주방가전",
-        price: 2890000,
-        subscriptionPrice: 58900,
-        productUrl: "",
-      },
-      {
-        itemType: "appliance",
-        image: dishwasherImage,
-        name: "LG 디오스 식기세척기",
-        category: "주방가전",
-        price: 1540000,
-        subscriptionPrice: 31900,
-        productUrl: "",
-      },
-      {
-        itemType: "appliance",
-        image: waterPurifierImage,
-        name: "LG 퓨리케어 정수기",
-        category: "생활가전",
-        price: 1290000,
-        subscriptionPrice: 27900,
-        productUrl: "",
-      },
-      {
-        itemType: "furniture",
-        image: lampImage,
-        name: "Eclisse 4colors",
-        category: "아르테미데",
-        price: 396000,
-        productUrl: "",
-      },
-      {
-        itemType: "furniture",
-        image: deskLampImage,
-        name: "Tizio",
-        category: "아르테미데",
-        price: 765000,
-        productUrl: "",
-      },
-      {
-        itemType: "furniture",
-        image: slipperImage,
-        name: "퀼팅 워셔블 거실화",
-        category: "자주",
-        price: 10100,
-        productUrl: "",
-      },
-      {
-        itemType: "furniture",
-        image: sofaImage,
-        name: "엘머파파 1인소파 패브릭소파",
-        category: "알로소",
-        price: 1342500,
-        productUrl: "",
-      },
-    ],
-  },
-  {
-    title: "추천 패키지 2",
-    typeLabel: "TYPE",
-    recommendationMessage:
-      "추천사유: 세탁과 공기 관리 중심으로 꼭 필요한 가전을 먼저 구성하고, 휴식감 있는 가구를 더해 생활 리듬이 자연스럽게 이어지도록 구성했어요. 기능성과 아늑함을 함께 가져갈 수 있는 조합이에요.",
-    items: [
-      {
-        itemType: "appliance",
-        image: washingMachineImage,
-        name: "LG 트롬 세탁기",
-        category: "세탁가전",
-        price: 1980000,
-        subscriptionPrice: 42900,
-        productUrl: "",
-      },
-      {
-        itemType: "appliance",
-        image: clothingCareImage,
-        name: "LG 스타일러",
-        category: "의류관리기",
-        price: 1760000,
-        subscriptionPrice: 38900,
-        productUrl: "",
-      },
-      {
-        itemType: "appliance",
-        image: airPurifierImage,
-        name: "LG 퓨리케어 공기청정기",
-        category: "공기관리",
-        price: 990000,
-        subscriptionPrice: 22100,
-        productUrl: "",
-      },
-      {
-        itemType: "furniture",
-        image: sofaImage,
-        name: "코지 라운지 체어",
-        category: "리빙체어",
-        price: 689000,
-        productUrl: "",
-      },
-      {
-        itemType: "furniture",
-        image: lampImage,
-        name: "무드 테이블 램프",
-        category: "조명",
-        price: 129000,
-        productUrl: "",
-      },
-    ],
-  },
-  {
-    title: "추천 패키지 3",
-    typeLabel: "FLEX TYPE",
-    recommendationMessage:
-      "추천사유: 주방과 생활 가전을 균형 있게 묶고, 조명과 패브릭 소품으로 공간 인상을 부드럽게 보완했어요. 매일 자주 쓰는 제품 위주로 구성해서 활용도와 만족도를 함께 높일 수 있어요.",
-    items: [
-      {
-        itemType: "appliance",
-        image: inductionImage,
-        name: "LG 디오스 인덕션",
-        category: "1등급 미라듀어",
-        price: 1711200,
-        subscriptionPrice: 36100,
-        productUrl: "",
-      },
-      {
-        itemType: "appliance",
-        image: dishwasherImage,
-        name: "LG 디오스 식기세척기",
-        category: "주방가전",
-        price: 1540000,
-        subscriptionPrice: 31900,
-        productUrl: "",
-      },
-      {
-        itemType: "appliance",
-        image: refrigeratorImage,
-        name: "LG 오브제 냉장고",
-        category: "주방가전",
-        price: 2890000,
-        subscriptionPrice: 58900,
-        productUrl: "",
-      },
-      {
-        itemType: "appliance",
-        image: clothingCareImage,
-        name: "LG 스타일러",
-        category: "의류관리기",
-        price: 1760000,
-        subscriptionPrice: 38900,
-        productUrl: "",
-      },
-      {
-        itemType: "appliance",
-        image: airPurifierImage,
-        name: "LG 퓨리케어 공기청정기",
-        category: "공기관리",
-        price: 990000,
-        subscriptionPrice: 22100,
-        productUrl: "",
-      },
-      {
-        itemType: "furniture",
-        image: slipperImage,
-        name: "워셔블 룸슈즈",
-        category: "패브릭 소품",
-        price: 18900,
-        productUrl: "",
-      },
-      {
-        itemType: "furniture",
-        image: deskLampImage,
-        name: "아틀리에 데스크 램프",
-        category: "조명",
-        price: 239000,
-        productUrl: "",
-      },
-    ],
+    id: "assistant-welcome",
+    role: "assistant",
+    text: "여기까지 알려주신 정보를 모두 잘 반영했어요!\n이제 고객님에게 맞는 추천 패키지를 확인해 보시고,\n더 궁금한 점이나 바꾸고 싶은 조건이 있다면 계속 말씀해 주세요.",
   },
 ];
-
-const getTotalPrice = (items: RecommendItem[]) =>
-  items.reduce((sum, item) => sum + item.price, 0);
 
 function RecommendChatbot() {
   const navigate = useNavigate();
   const [isChatOpen, setIsChatOpen] = useState(true);
   const [chatInputValue, setChatInputValue] = useState("");
+  const [chatMessages, setChatMessages] = useState(INITIAL_CHAT_MESSAGES);
   const [expandedPackages, setExpandedPackages] = useState<Record<string, boolean>>({});
+  const [selectedSort, setSelectedSort] = useState<PackageSortType>("default");
   const collapsedApplianceLimit = isChatOpen ? 4 : 5;
+  const recommendPackages = BACKEND_RECOMMEND_PACKAGE_PAYLOAD.packages;
+  const chatMessagesRef = useRef<HTMLDivElement | null>(null);
+  const sortedRecommendPackages = [...recommendPackages].sort((leftPackage, rightPackage) => {
+    if (selectedSort === "price") {
+      return getPackageTotalPrice(leftPackage) - getPackageTotalPrice(rightPackage);
+    }
+
+    if (selectedSort === "popularity") {
+      return getPackagePopularityScore(rightPackage) - getPackagePopularityScore(leftPackage);
+    }
+
+    return 0;
+  });
+
+  useEffect(() => {
+    if (!isChatOpen || !chatMessagesRef.current) {
+      return;
+    }
+
+    chatMessagesRef.current.scrollTop = chatMessagesRef.current.scrollHeight;
+  }, [chatMessages, isChatOpen]);
 
   const handleChatSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setChatInputValue((prev) => prev.trim());
+    const trimmedValue = chatInputValue.trim();
+
+    if (!trimmedValue) {
+      return;
+    }
+
+    setChatMessages((prev) => [
+      ...prev,
+      {
+        id: `user-${Date.now()}`,
+        role: "user",
+        text: trimmedValue,
+      },
+      {
+        id: `assistant-${Date.now()}`,
+        role: "assistant",
+        text: trimmedValue,
+      },
+    ]);
+    setChatInputValue("");
   };
 
   const togglePackage = (title: string) => {
@@ -323,19 +417,34 @@ function RecommendChatbot() {
                 </span>
               </div>
               <p className={styles.subtitle}>
-                당신에게 맞는 추천 리스트를 완성했어요. 담고 싶은 가전을 선택해주세요.
+                입력해주신 조건을 바탕으로 추천 패키지를 완성했어요. 원하는 구성을 살펴보세요.
               </p>
               <div className={styles.filterRow}>
                 <button
                   type="button"
-                  className={`${styles.filterChip} ${styles.filterChipActive}`}
+                  className={`${styles.filterChip} ${
+                    selectedSort === "default" ? styles.filterChipActive : ""
+                  }`}
+                  onClick={() => setSelectedSort("default")}
                 >
                   전체
                 </button>
-                <button type="button" className={styles.filterChip}>
+                <button
+                  type="button"
+                  className={`${styles.filterChip} ${
+                    selectedSort === "price" ? styles.filterChipActive : ""
+                  }`}
+                  onClick={() => setSelectedSort("price")}
+                >
                   가격순
                 </button>
-                <button type="button" className={styles.filterChip}>
+                <button
+                  type="button"
+                  className={`${styles.filterChip} ${
+                    selectedSort === "popularity" ? styles.filterChipActive : ""
+                  }`}
+                  onClick={() => setSelectedSort("popularity")}
+                >
                   인기순
                 </button>
               </div>
@@ -343,14 +452,10 @@ function RecommendChatbot() {
           </div>
 
           <div className={styles.packageList}>
-            {RECOMMEND_PACKAGES.map((recommendPackage) => {
+            {sortedRecommendPackages.map((recommendPackage) => {
               const isExpanded = expandedPackages[recommendPackage.title] ?? false;
-              const applianceItems = recommendPackage.items.filter(
-                (item) => item.itemType === "appliance",
-              );
-              const furnitureItems = recommendPackage.items.filter(
-                (item) => item.itemType === "furniture",
-              );
+              const applianceItems = recommendPackage.appliances;
+              const furnitureItems = recommendPackage.furniture;
               const visibleApplianceItems = isExpanded
                 ? applianceItems
                 : applianceItems.slice(0, collapsedApplianceLimit);
@@ -363,8 +468,8 @@ function RecommendChatbot() {
                     <div className={styles.packageHeadingRow}>
                       <h2 className={styles.packageTitle}>{recommendPackage.title}</h2>
                       <span className={styles.packageMeta}>
-                        {`{${recommendPackage.typeLabel}} | 총 예상 결제액: ${Math.round(
-                          getTotalPrice(recommendPackage.items) / 10000,
+                        {`{${recommendPackage.typeLabel}} | 총 예상 결제액 ${Math.round(
+                          getPackageTotalPrice(recommendPackage) / 10000,
                         ).toLocaleString("ko-KR")}만원`}
                       </span>
                     </div>
@@ -394,19 +499,21 @@ function RecommendChatbot() {
                                 className={styles.productCard}
                               >
                                 <div className={styles.productImageWrap}>
-                                  <img src={item.image} alt={item.name} className={styles.productImage} />
+                                  <img
+                                    src={item.image}
+                                    alt={item.name}
+                                    className={styles.productImage}
+                                  />
                                 </div>
                                 <strong className={styles.productName}>{item.name}</strong>
                                 <span className={styles.productCategory}>{item.category}</span>
-                                <span className={styles.productPrice}>{formatPrice(item.price)}</span>
-                                {item.subscriptionPrice ? (
-                                  <>
-                                    <span className={styles.subscriptionLabel}>월 구독</span>
-                                    <div className={styles.subscriptionPill}>
-                                      {`월 ${formatPrice(item.subscriptionPrice)}`}
-                                    </div>
-                                  </>
-                                ) : null}
+                                <span className={styles.productPrice}>
+                                  {formatPrice(item.totalPrice)}
+                                </span>
+                                <span className={styles.subscriptionLabel}>구독가</span>
+                                <div className={styles.subscriptionPill}>
+                                  {`월 ${formatPrice(item.subscriptionPrice)}`}
+                                </div>
                                 <span className={styles.productAction}>자세히 보기 &gt;</span>
                               </div>
                             ))}
@@ -422,19 +529,15 @@ function RecommendChatbot() {
                                 className={styles.productCard}
                               >
                                 <div className={styles.productImageWrap}>
-                                  <img src={item.image} alt={item.name} className={styles.productImage} />
+                                  <img
+                                    src={item.image}
+                                    alt={item.name}
+                                    className={styles.productImage}
+                                  />
                                 </div>
                                 <strong className={styles.productName}>{item.name}</strong>
                                 <span className={styles.productCategory}>{item.category}</span>
                                 <span className={styles.productPrice}>{formatPrice(item.price)}</span>
-                                {item.subscriptionPrice ? (
-                                  <>
-                                    <span className={styles.subscriptionLabel}>월 구독</span>
-                                    <div className={styles.subscriptionPill}>
-                                      {`월 ${formatPrice(item.subscriptionPrice)}`}
-                                    </div>
-                                  </>
-                                ) : null}
                                 <span className={styles.productAction}>자세히 보기 &gt;</span>
                               </div>
                             ))}
@@ -453,15 +556,11 @@ function RecommendChatbot() {
                             </div>
                             <strong className={styles.productName}>{item.name}</strong>
                             <span className={styles.productCategory}>{item.category}</span>
-                            <span className={styles.productPrice}>{formatPrice(item.price)}</span>
-                            {item.subscriptionPrice ? (
-                              <>
-                                <span className={styles.subscriptionLabel}>월 구독</span>
-                                <div className={styles.subscriptionPill}>
-                                  {`월 ${formatPrice(item.subscriptionPrice)}`}
-                                </div>
-                              </>
-                            ) : null}
+                            <span className={styles.productPrice}>{formatPrice(item.totalPrice)}</span>
+                            <span className={styles.subscriptionLabel}>구독가</span>
+                            <div className={styles.subscriptionPill}>
+                              {`월 ${formatPrice(item.subscriptionPrice)}`}
+                            </div>
                             <span className={styles.productAction}>자세히 보기 &gt;</span>
                           </div>
                         ))}
@@ -469,7 +568,7 @@ function RecommendChatbot() {
                     )}
                     {isExpanded ? (
                       <p className={styles.recommendationMessage}>
-                        {recommendPackage.recommendationMessage}
+                        {recommendPackage.recommendationReason}
                       </p>
                     ) : null}
                     <div className={styles.packageActions}>
@@ -481,7 +580,7 @@ function RecommendChatbot() {
                             state: {
                               packageTitle: recommendPackage.title,
                               packageTypeLabel: recommendPackage.typeLabel,
-                              itemCount: recommendPackage.items.length,
+                              itemCount: getPackageItemCount(recommendPackage),
                             },
                           })
                         }
@@ -516,26 +615,36 @@ function RecommendChatbot() {
               <button
                 type="button"
                 className={styles.chatCollapseBtn}
-                aria-label="챗봇 접기"
+                aria-label="챗봇 닫기"
                 onClick={() => setIsChatOpen(false)}
               >
                 <FiChevronDown size={20} />
               </button>
             </div>
 
-            <div className={styles.chatMessages}>
-              <div className={styles.chatRow}>
-                <div className={styles.chatAvatar}>
-                  <img src={snowLogo} alt="챗봇 아이콘" className={styles.chatAvatarImage} />
+            <div className={styles.chatMessages} ref={chatMessagesRef}>
+              {chatMessages.map((message) => (
+                <div
+                  key={message.id}
+                  className={`${styles.chatRow} ${message.role === "user" ? styles.chatRowUser : ""}`}
+                >
+                  {message.role === "assistant" ? (
+                    <div className={styles.chatAvatar}>
+                      <img src={snowLogo} alt="챗봇 아이콘" className={styles.chatAvatarImage} />
+                    </div>
+                  ) : null}
+                  <div
+                    className={`${styles.chatBubble} ${message.role === "user" ? styles.chatBubbleUser : ""}`}
+                  >
+                    {message.text.split("\n").map((line, index) => (
+                      <span key={`${message.id}-${index}`}>
+                        {index > 0 ? <br /> : null}
+                        {line}
+                      </span>
+                    ))}
+                  </div>
                 </div>
-                <div className={styles.chatBubble}>
-                  여기까지 알려주신 정보들 모두 잘 받았어요! 😊
-                  <br />
-                  이제 고객님만의 완벽한 공간을 위한 추천 리스트를 확인해보세요! ✨
-                  <br />
-                  추가로 물어보고 싶은 내용이 있다면 대화창에 계속 남겨주세요!
-                </div>
-              </div>
+              ))}
             </div>
 
             <form className={styles.chatInputBar} onSubmit={handleChatSubmit}>
@@ -547,7 +656,7 @@ function RecommendChatbot() {
                   className={styles.chatInput}
                   value={chatInputValue}
                   onChange={(event) => setChatInputValue(event.target.value)}
-                  placeholder="추가로 궁금한 내용을 입력하세요"
+                  placeholder="추가로 궁금한 내용이나 조건을 입력해 주세요"
                   aria-label="추가 질문 입력"
                 />
                 <button type="submit" className={styles.chatSendBtn} aria-label="전송">

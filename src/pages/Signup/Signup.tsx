@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import logoImg from "@/assets/images/icon_symbor_mark.png";
 import styles from "./Signup.module.css";
@@ -7,6 +7,13 @@ import styles from "./Signup.module.css";
 function Signup() {
   const { signup } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const redirectState = location.state as
+    | {
+        redirectTo?: string;
+        lifeType?: string;
+      }
+    | null;
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -92,6 +99,14 @@ function Signup() {
     setLoading(false);
 
     if (success) {
+      if (redirectState?.redirectTo) {
+        navigate(redirectState.redirectTo, {
+          replace: true,
+          state: redirectState.lifeType ? { lifeType: redirectState.lifeType } : undefined,
+        });
+        return;
+      }
+
       navigate("/");
     } else {
       setError("이미 가입된 이메일입니다.");
@@ -338,7 +353,11 @@ function Signup() {
           <span style={{ fontSize: 14, color: "var(--color-gray-500)" }}>
             이미 계정이 있으신가요?
           </span>
-          <Link to="/login" className={styles.bottomLink}>
+          <Link
+            to="/login"
+            state={redirectState ?? undefined}
+            className={styles.bottomLink}
+          >
             로그인
           </Link>
         </div>

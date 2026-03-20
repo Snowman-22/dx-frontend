@@ -240,7 +240,7 @@
 
 .productImageWrap {
   width: 100%;
-  max-width: 128px;
+  max-width: 135px;
   aspect-ratio: 1 / 1;
   display: flex;
   align-items: center;
@@ -366,7 +366,7 @@
 
 .chatPanelTitle {
   color: #365137;
-  font-size: 16px;
+  font-size: 14.7px;
   font-weight: 700;
 }
 
@@ -384,14 +384,22 @@
 .chatMessages {
   flex: 1;
   display: flex;
-  align-items: flex-start;
-  padding: 8px 18px 18px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 7px;
+  padding: 8px 18px 14px;
+  overflow-y: auto;
 }
 
 .chatRow {
   display: flex;
   align-items: flex-start;
   gap: 16px;
+  justify-content: flex-start;
+}
+
+.chatRowUser {
+  justify-content: flex-end;
 }
 
 .chatAvatar {
@@ -414,15 +422,27 @@
 
 .chatBubble {
   max-width: 350px;
-  padding: 22px 24px;
+  padding: 14px 20px;
   border-radius: 26px;
   background: rgba(255, 255, 255, 0.94);
-  box-shadow: 0 16px 30px rgba(180, 190, 175, 0.14);
+  border: 1px solid rgba(233, 238, 231, 0.92);
+  box-shadow:
+    0 16px 30px rgba(180, 190, 175, 0.1),
+    0 0 0 1px rgba(245, 247, 243, 0.78);
   color: #384939;
-  font-size: 14.7px;
+  font-size: 13.4px;
   font-weight: 500;
-  line-height: 1.72;
+  line-height: 1.6;
   letter-spacing: -0.03em;
+}
+
+.chatBubbleUser {
+  border: 1px solid rgba(118, 200, 109, 0.92);
+  background: linear-gradient(135deg, #8bd77f 0%, #74cc73 100%);
+  box-shadow:
+    0 16px 30px rgba(137, 202, 126, 0.18),
+    0 0 0 1px rgba(202, 238, 194, 0.28);
+  color: #ffffff;
 }
 
 .chatInputBar {
@@ -466,7 +486,7 @@
   border: none;
   background: transparent;
   color: #334234;
-  font-size: 15px;
+  font-size: 13.7px;
   line-height: 1.4;
   outline: none;
 }
@@ -546,7 +566,7 @@
 
   .chatBubble {
     max-width: 290px;
-    padding: 18px 20px;
-    font-size: 13.7px;
+    padding: 14px 18px;
+    font-size: 12.4px;
   }
 }

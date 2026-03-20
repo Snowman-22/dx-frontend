@@ -10,6 +10,7 @@ import Recommend from "@/pages/Recommend/Recommend";
 import RecommendChatbot from "@/pages/RecommendChatbot/RecommendChatbot";
 import Simulation from "@/pages/Simulation/Simulation";
 import Chatbot from "@/pages/Chatbot/Chatbot";
+import MyPage from "@/pages/MyPage/MyPage";
 import NotReady from "@/pages/NotReady/NotReady";
 
 function App() {
@@ -33,6 +34,7 @@ function App() {
         <Route path="/recommend" element={<Recommend />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/mypage" element={<MyPage />} />
         <Route path="*" element={<NotReady />} />
       </Route>
     </Routes>

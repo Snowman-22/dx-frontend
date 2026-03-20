@@ -42,6 +42,25 @@ interface StoredUser {
   phone: string;
 }
 
+const DEMO_USER: StoredUser = {
+  id: "demo-user",
+  name: "테스트 사용자",
+  email: "demo@lg.com",
+  password: "Test1234!",
+  gender: "male",
+  birthDate: "1995-05-15",
+  phone: "01012345678",
+};
+
+function readStoredUsers(): StoredUser[] {
+  try {
+    const stored = localStorage.getItem(USERS_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch {
+    return [];
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(() => {
     try {
@@ -53,6 +72,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
 
   useEffect(() => {
+    const users = readStoredUsers();
+    if (users.some((storedUser) => storedUser.email === DEMO_USER.email)) {
+      return;
+    }
+
+    localStorage.setItem(USERS_KEY, JSON.stringify([...users, DEMO_USER]));
+  }, []);
+
+  useEffect(() => {
     if (user) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
     } else {
@@ -61,12 +89,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [user]);
 
   const getStoredUsers = (): StoredUser[] => {
-    try {
-      const stored = localStorage.getItem(USERS_KEY);
-      return stored ? JSON.parse(stored) : [];
-    } catch {
-      return [];
-    }
+    return readStoredUsers();
   };
 
   const login = useCallback(async (email: string, password: string): Promise<boolean> => {

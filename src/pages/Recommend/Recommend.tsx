@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import snowLogo from "../../assets/images/snow_logo.png";
 import styles from "./Recommend.module.css";
 
@@ -69,7 +70,25 @@ const LIFE_TYPES: LifeTypeCard[] = [
 
 function Recommend() {
   const [selected, setSelected] = useState<LifeTypeId | null>(null);
+  const [isLoginPromptOpen, setIsLoginPromptOpen] = useState(false);
   const navigate = useNavigate();
+  const { isLoggedIn } = useAuth();
+
+  const getRedirectState = () => ({
+    redirectTo: "/chatbot",
+    lifeType: selected,
+  });
+
+  const handleStart = () => {
+    if (!selected) return;
+
+    if (isLoggedIn) {
+      navigate("/chatbot", { state: { lifeType: selected } });
+      return;
+    }
+
+    setIsLoginPromptOpen(true);
+  };
 
   return (
     <div className={styles.page}>
@@ -150,11 +169,71 @@ function Recommend() {
           type="button"
           className={styles.startBtn}
           disabled={!selected}
-          onClick={() => navigate("/chatbot", { state: { lifeType: selected } })}
+          onClick={handleStart}
         >
           선택한 유형으로 시작하기
         </button>
       </section>
+
+      {isLoginPromptOpen && (
+        <div
+          className={styles.modalBackdrop}
+          role="presentation"
+          onClick={() => setIsLoginPromptOpen(false)}
+        >
+          <div
+            className={styles.modalCard}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="recommend-login-title"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <span className={styles.modalEyebrow}>회원 전용 서비스</span>
+            <h2 id="recommend-login-title" className={styles.modalTitle}>
+              선택한 유형 기반 추천 서비스는
+              <br />
+              로그인한 회원만 이용할 수 있어요
+            </h2>
+            <p className={styles.modalDescription}>
+              LG전자 계정으로 로그인하면
+              <br />
+              선택한 라이프 유형에 맞춘 공간 추천을
+              <br />
+              바로 이어서 받아볼 수 있어요.
+            </p>
+            <p className={styles.modalDescription}>
+              아직 회원이 아니신가요?
+              <br />
+              지금 가입하고 맞춤 추천은 물론,
+              <br />
+              다양한 회원 혜택과 편리한 서비스를 함께 누려보세요.
+            </p>
+            <div className={styles.modalActions}>
+              <button
+                type="button"
+                className={styles.modalSecondaryBtn}
+                onClick={() => navigate("/login", { state: getRedirectState() })}
+              >
+                로그인
+              </button>
+              <button
+                type="button"
+                className={styles.modalPrimaryBtn}
+                onClick={() => navigate("/signup", { state: getRedirectState() })}
+              >
+                회원가입
+              </button>
+            </div>
+            <button
+              type="button"
+              className={styles.modalCloseBtn}
+              onClick={() => setIsLoginPromptOpen(false)}
+            >
+              나중에 할게요
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

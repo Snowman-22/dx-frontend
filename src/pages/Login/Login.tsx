@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import logoImg from "@/assets/images/icon_symbor_mark.png";
 import styles from "./Login.module.css";
@@ -7,6 +7,13 @@ import styles from "./Login.module.css";
 function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const redirectState = location.state as
+    | {
+        redirectTo?: string;
+        lifeType?: string;
+      }
+    | null;
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -31,6 +38,14 @@ function Login() {
     setLoading(false);
 
     if (success) {
+      if (redirectState?.redirectTo) {
+        navigate(redirectState.redirectTo, {
+          replace: true,
+          state: redirectState.lifeType ? { lifeType: redirectState.lifeType } : undefined,
+        });
+        return;
+      }
+
       navigate("/");
     } else {
       setError("이메일 또는 비밀번호가 일치하지 않습니다.");
@@ -85,7 +100,11 @@ function Login() {
         </form>
 
         <div className={styles.bottomLinks}>
-          <Link to="/signup" className={styles.bottomLink}>
+          <Link
+            to="/signup"
+            state={redirectState ?? undefined}
+            className={styles.bottomLink}
+          >
             회원가입
           </Link>
           <span className={styles.dot} />

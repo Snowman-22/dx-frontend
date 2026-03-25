@@ -3,6 +3,8 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { FiArrowUp, FiPlus } from "react-icons/fi";
 import ChatMessage from "./ChatMessage";
 import ChatSidebar from "./ChatSidebar";
+import { useChatSession } from "@/hooks/useChatSession";
+import { fetchRecommendations, onStompDisconnect } from "@/services/chatService";
 import {
   buildBotReply,
   getApplianceOptions,
@@ -12,8 +14,11 @@ import {
   getBudgetInvalidMessage,
   getBudgetPromptMessage,
   getBudgetQuickReplies,
+  getFurnitureOptions,
   getFurnitureRecommendationQuickReplies,
   getFurnitureRecommendationSkippedMessage,
+  getFurnitureSelectionAcknowledgedMessage,
+  getFurnitureSelectionPromptMessage,
   getGreetingMessage,
   getIntroMessage,
   getInteriorStyleOptions,
@@ -30,6 +35,7 @@ import {
   getSpaceSizeSelectionMessages,
   getSpaceSizeQuickReplies,
   isValidRoomTypeInput,
+  type FurnitureOption,
   type InteriorStyleOption,
   type LifestyleCategory,
   type LifeTypeKey,
@@ -69,6 +75,7 @@ type ChatStage =
   | "spaceSize"
   | "furnitureRecommendation"
   | "interiorStyle"
+  | "furnitureSelection"
   | "lifestyle"
   | "budget"
   | "free";
@@ -78,10 +85,46 @@ type LifestyleTab = 1 | 2;
 
 const BOT_TOKEN_DELAY_MS = 110;
 
+// ─── Stage → stepCode 매핑 ───
+const STAGE_STEP_MAP: Record<ChatStage, string> = {
+  spaceSize: "CHAT_0",
+  roomType: "CHAT_1",
+  applianceSelection: "CHAT_2",
+  furnitureRecommendation: "CHAT_3",
+  interiorStyle: "CHAT_4",
+  furnitureSelection: "CHAT_7",
+  lifestyle: "CHAT_5",
+  budget: "CHAT_6",
+  free: "CHAT_0",
+};
+
 function Chatbot() {
   const location = useLocation();
   const navigate = useNavigate();
-  const lifeType = (location.state as { lifeType?: LifeTypeKey } | null)?.lifeType;
+  const locationState = location.state as {
+    lifeType?: LifeTypeKey;
+    chatSession?: import("@/services/chatService").ChatSession;
+  } | null;
+  const lifeType = locationState?.lifeType;
+  const existingSession = locationState?.chatSession ?? null;
+
+  // ─── 서버 세션 (STOMP) ───
+  const { send: stompSend, convId, isReady: isSessionReady } = useChatSession(lifeType, existingSession);
+
+  // STOMP 연결 끊김 감지 → 메인으로 이동
+  useEffect(() => {
+    let disconnected = false;
+    onStompDisconnect(() => {
+      if (disconnected) return;
+      disconnected = true;
+      alert("인터넷 연결이 끊겼습니다. 메인 화면으로 이동합니다.");
+      navigate("/");
+    });
+    return () => {
+      disconnected = true;
+      onStompDisconnect(null);
+    };
+  }, [navigate]);
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -102,10 +145,15 @@ function Chatbot() {
     null,
   );
   const [selectedLifestyles, setSelectedLifestyles] = useState<string[]>([]);
+  const [confirmedOwnedLabels, setConfirmedOwnedLabels] = useState<string[]>([]);
+  const [furnitureModalOpen, setFurnitureModalOpen] = useState(false);
+  const [shouldAutoOpenFurnitureModal, setShouldAutoOpenFurnitureModal] = useState(false);
+  const [selectedFurniture, setSelectedFurniture] = useState<string[]>([]);
   const [replyButtonsReady, setReplyButtonsReady] = useState(false);
   const [botQueueVersion, setBotQueueVersion] = useState(0);
   const [isBotTyping, setIsBotTyping] = useState(false);
   const [showRecommendCta, setShowRecommendCta] = useState(false);
+  const [isLoadingRecommend, setIsLoadingRecommend] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const botQueueRef = useRef<BotQueueItem[]>([]);
@@ -121,7 +169,20 @@ function Chatbot() {
   const spaceSizeQuickReplies = getSpaceSizeQuickReplies();
   const furnitureRecommendationQuickReplies =
     getFurnitureRecommendationQuickReplies();
-  const interiorStyleOptions = getInteriorStyleOptions();
+  const [interiorStyleOptions, setInteriorStyleOptions] = useState(() => getInteriorStyleOptions());
+  const refreshInteriorImages = () => {
+    const newOptions = getInteriorStyleOptions();
+    setInteriorStyleOptions(newOptions);
+    // 이미 표시된 메시지의 이미지도 교체
+    setMessages((prev) =>
+      prev.map((msg) =>
+        "type" in msg && msg.type === "interior-style-selector"
+          ? { ...msg, options: newOptions }
+          : msg,
+      ),
+    );
+  };
+  const furnitureOptions = getFurnitureOptions();
   const lifestyleCategories = getLifestyleCategories();
   const budgetQuickReplies = getBudgetQuickReplies();
   const lifestyleCategoriesByTab = lifestyleCategories.reduce<
@@ -365,7 +426,7 @@ function Chatbot() {
       setApplianceModalOpen(true);
       setShouldAutoOpenApplianceModal(false);
       applianceModalTimeoutRef.current = null;
-    }, 2000);
+    }, 1500);
 
     return () => {
       clearApplianceModalTimer();
@@ -388,7 +449,7 @@ function Chatbot() {
       setLifestyleModalOpen(true);
       setShouldAutoOpenLifestyleModal(false);
       lifestyleModalTimeoutRef.current = null;
-    }, 300);
+    }, 1500);
 
     return () => {
       clearLifestyleModalTimer();
@@ -402,9 +463,35 @@ function Chatbot() {
   ]);
 
   useEffect(() => {
+    if (
+      !shouldAutoOpenFurnitureModal ||
+      currentStage !== "furnitureSelection" ||
+      furnitureModalOpen ||
+      isBotTyping ||
+      botQueueRef.current.length > 0
+    ) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      setFurnitureModalOpen(true);
+      setShouldAutoOpenFurnitureModal(false);
+    }, 1500);
+
+    return () => { window.clearTimeout(timer); };
+  }, [
+    botQueueVersion,
+    currentStage,
+    isBotTyping,
+    furnitureModalOpen,
+    shouldAutoOpenFurnitureModal,
+  ]);
+
+  useEffect(() => {
     const shouldShowReplyButtons =
       !applianceModalOpen &&
       !lifestyleModalOpen &&
+      !furnitureModalOpen &&
       !isBotTyping &&
       botQueueRef.current.length === 0 &&
       (currentStage === "roomType" ||
@@ -424,8 +511,17 @@ function Chatbot() {
     setInput("");
   };
 
+  const BUDGET_VALUE_MAP: Record<string, string> = {
+    "150만원 이하": "150",
+    "300만원 이하": "300",
+    "450만원 이하": "450",
+    "600만원 이하": "600",
+    "그 이상": "1000",
+  };
+
   const completeBudgetStep = (answer: string) => {
     appendUserMessage(answer);
+    stompSend(STAGE_STEP_MAP.budget, BUDGET_VALUE_MAP[answer] ?? answer, "총 예산은 어느 정도 생각하고 계세요?");
     enqueueBotMessages([getBudgetCompletedMessage()]);
     budgetInvalidNoticeShownRef.current = false;
     setReplyButtonsReady(false);
@@ -435,9 +531,14 @@ function Chatbot() {
   };
 
   const submitLifestyleSelection = () => {
-    appendUserMessage(
-      selectedLifestyles.length === 0 ? "선택한 항목 없음" : selectedLifestyles.join(", "),
-    );
+    const count = selectedLifestyles.length;
+    const lifestyleText = count === 0
+      ? "선택한 항목 없음"
+      : count <= 3
+        ? selectedLifestyles.join(", ")
+        : `${selectedLifestyles.slice(0, 3).join(", ")} 외 ${count - 3}개`;
+    appendUserMessage(lifestyleText);
+    stompSend(STAGE_STEP_MAP.lifestyle, selectedLifestyles, "생활 방식과 취향에 맞는 조건을 선택해 주세요");
     enqueueBotMessages([
       getLifestyleSelectionMessage(selectedLifestyles),
       getBudgetPromptMessage(),
@@ -462,6 +563,7 @@ function Chatbot() {
       return;
     }
 
+    stompSend(STAGE_STEP_MAP.roomType, trimmed, "어떤 공간 유형에 살고 계세요?");
     enqueueBotMessages(getRoomTypeSelectionMessages(trimmed));
     setReplyButtonsReady(false);
     setCurrentStage("applianceSelection");
@@ -585,7 +687,12 @@ function Chatbot() {
             .filter(Boolean)
             .join("\n");
 
+    setConfirmedOwnedLabels(selectedOwnedLabels);
     appendUserMessage(userSelectionSummary);
+    stompSend(STAGE_STEP_MAP.applianceSelection, {
+      owned: selectedOwnedLabels,
+      needed: selectedNeededLabels,
+    }, "현재 보유 중인 가전과 필요한 가전을 선택해 주세요");
     enqueueBotMessages(getApplianceSelectionMessages(selectedLabels));
     setApplianceModalOpen(false);
     setShouldAutoOpenApplianceModal(false);
@@ -598,11 +705,20 @@ function Chatbot() {
     setCurrentStage("furnitureRecommendation");
   };
 
+  const SPACE_SIZE_VALUE_MAP: Record<string, string> = {
+    "10평 미만": "8",
+    "10평형대": "15",
+    "20평형대": "25",
+    "30평형대": "35",
+    "30평 이상": "45",
+  };
+
   const handleSpaceSizeSelect = (label: string, isDirectInput = false) => {
     const trimmed = label.trim();
     if (!trimmed) return;
 
     appendUserMessage(trimmed);
+    stompSend(STAGE_STEP_MAP.spaceSize, SPACE_SIZE_VALUE_MAP[trimmed] ?? trimmed, "집의 평수는 어떻게 되나요?");
     enqueueBotMessages(getSpaceSizeSelectionMessages(trimmed, isDirectInput));
     setReplyButtonsReady(false);
     setCurrentStage("applianceSelection");
@@ -615,6 +731,7 @@ function Chatbot() {
     if (!trimmed) return;
 
     appendUserMessage(trimmed);
+    stompSend(STAGE_STEP_MAP.furnitureRecommendation, trimmed, "가구 또는 인테리어 소품도 추천해 드릴까요?");
     setSelectedInteriorStyle(null);
     setReplyButtonsReady(false);
 
@@ -626,6 +743,10 @@ function Chatbot() {
       setCurrentStage("interiorStyle");
       return;
     }
+
+    // 가구 추천 스킵 시 CHAT_4, CHAT_7 모두 null/null로 전송
+    stompSend(STAGE_STEP_MAP.interiorStyle, "", null);
+    stompSend(STAGE_STEP_MAP.furnitureSelection, "", null);
 
     enqueueBotMessages([
       getFurnitureRecommendationSkippedMessage(),
@@ -641,13 +762,38 @@ function Chatbot() {
 
     setSelectedInteriorStyle(trimmed);
     appendUserMessage(trimmed);
+    stompSend(STAGE_STEP_MAP.interiorStyle, trimmed, "선호하는 인테리어 스타일을 선택해 주세요");
     enqueueBotMessages([
       getInteriorStyleSelectedMessage(),
-      getLifestylePromptMessage(),
+      getFurnitureSelectionPromptMessage(),
     ]);
     setReplyButtonsReady(false);
+    setCurrentStage("furnitureSelection");
+    setShouldAutoOpenFurnitureModal(true);
+  };
+
+  const handleFurnitureSelectionComplete = () => {
+    setFurnitureModalOpen(false);
+    const selectedLabels = selectedFurniture;
+    const userText = selectedLabels.length === 0 ? "없음" : selectedLabels.join(", ");
+    appendUserMessage(userText);
+    stompSend(STAGE_STEP_MAP.furnitureSelection, selectedLabels, "필요하신 가구를 선택해 주세요");
+    enqueueBotMessages([
+      selectedLabels.length > 0
+        ? getFurnitureSelectionAcknowledgedMessage()
+        : "나중에 필요하시면 언제든 알려주세요!",
+      getLifestylePromptMessage(),
+    ]);
     setCurrentStage("lifestyle");
     setShouldAutoOpenLifestyleModal(true);
+  };
+
+  const handleFurnitureToggle = (label: string) => {
+    setSelectedFurniture((prev) =>
+      prev.includes(label)
+        ? prev.filter((item) => item !== label)
+        : [...prev, label],
+    );
   };
 
   const handleLifestyleSelect = (label: string) => {
@@ -676,11 +822,7 @@ function Chatbot() {
     currentStage === "furnitureRecommendation" && replyButtonsReady;
   const showBudgetQuickReplies =
     currentStage === "budget" && replyButtonsReady;
-  const showLifestyleModalTrigger =
-    currentStage === "lifestyle" &&
-    !lifestyleModalOpen &&
-    !isBotTyping &&
-    botQueueRef.current.length === 0;
+  const showLifestyleModalTrigger = false; // 모달이 자동으로 뜨므로 버튼 불필요
   const applianceTabPrompt =
     activeApplianceTab === "owned"
       ? "현재 보유 중인 가전을 선택해 주세요"
@@ -688,6 +830,7 @@ function Chatbot() {
   const isTextInputDisabled =
     currentStage === "furnitureRecommendation" ||
     currentStage === "interiorStyle" ||
+    currentStage === "furnitureSelection" ||
     currentStage === "lifestyle";
   const isSendDisabled = isTextInputDisabled || !input.trim();
 
@@ -702,44 +845,21 @@ function Chatbot() {
 
       <div className={styles.chatArea}>
         {applianceModalOpen && (
-          <div className={styles.modalOverlay} onClick={handleApplianceComplete}>
-            <div className={styles.modalCard} onClick={(e) => e.stopPropagation()}>
+          <div className={styles.modalOverlay}>
+            <div className={styles.modalCard}>
               <div className={styles.modalHeader}>
                 <div>
-                  <div className={styles.applianceTabs} role="tablist" aria-label="가전 선택 탭">
-                    <button
-                      type="button"
-                      role="tab"
-                      aria-selected={activeApplianceTab === "owned"}
-                      className={`${styles.applianceTabBtn} ${
-                        activeApplianceTab === "owned" ? styles.applianceTabBtnActive : ""
-                      }`}
-                      onClick={() => setActiveApplianceTab("owned")}
-                    >
-                      보유
-                    </button>
-                    <button
-                      type="button"
-                      role="tab"
-                      aria-selected={activeApplianceTab === "needed"}
-                      className={`${styles.applianceTabBtn} ${
-                        activeApplianceTab === "needed" ? styles.applianceTabBtnActive : ""
-                      }`}
-                      onClick={() => setActiveApplianceTab("needed")}
-                    >
-                      필요
-                    </button>
-                  </div>
+                  <p className={styles.modalEyebrow}>STEP 2</p>
                   <h2 className={styles.modalTitle}>{applianceTabPrompt}</h2>
+                  <p className={styles.modalHelper}>
+                    {activeApplianceTab === "owned"
+                      ? "현재 보유 중인 가전을 선택한 뒤 다음 페이지로 넘어가세요."
+                      : "추가로 필요한 가전을 선택한 뒤 선택 완료를 눌러주세요."}
+                  </p>
+                  <p className={styles.modalPageIndicator}>
+                    {activeApplianceTab === "owned" ? "1" : "2"} / 2 페이지
+                  </p>
                 </div>
-                <button
-                  type="button"
-                  className={styles.modalCloseBtn}
-                  onClick={handleApplianceComplete}
-                  aria-label="모달 닫기"
-                >
-                  ×
-                </button>
               </div>
 
               <div className={styles.applianceGrid}>
@@ -782,10 +902,78 @@ function Chatbot() {
               </div>
 
               <div className={styles.modalFooter}>
+                {activeApplianceTab === "owned" ? (
+                  <button
+                    type="button"
+                    className={styles.modalActionBtn}
+                    onClick={() => setActiveApplianceTab("needed")}
+                  >
+                    다음 페이지
+                  </button>
+                ) : (
+                  <div className={styles.modalActionGroup}>
+                    <button
+                      type="button"
+                      className={styles.modalSecondaryBtn}
+                      onClick={() => setActiveApplianceTab("owned")}
+                    >
+                      뒤로가기
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.modalActionBtn}
+                      onClick={handleApplianceComplete}
+                    >
+                      선택 완료
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {furnitureModalOpen && (
+          <div className={styles.modalOverlay}>
+            <div className={styles.modalCard}>
+              <div className={styles.modalHeader}>
+                <div>
+                  <p className={styles.modalEyebrow}>STEP 4-2</p>
+                  <h2 className={styles.modalTitle}>
+                    필요하신 가구를 선택해 주세요
+                  </h2>
+                  <p className={styles.modalHelper}>
+                    여러 개를 선택하실 수 있고, 필요 없으시면 바로 선택 완료를 눌러주세요.
+                  </p>
+                </div>
+              </div>
+
+              <div className={styles.applianceGrid}>
+                {furnitureOptions.map((option) => {
+                  const selected = selectedFurniture.includes(option.label);
+
+                  return (
+                    <button
+                      key={option.id}
+                      type="button"
+                      className={`${styles.applianceCard} ${
+                        selected ? styles.applianceCardSelected : ""
+                      }`}
+                      aria-pressed={selected}
+                      onClick={() => handleFurnitureToggle(option.label)}
+                    >
+                      <span className={styles.applianceIcon}>{option.icon}</span>
+                      <span className={styles.applianceLabel}>{option.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className={styles.modalFooter}>
                 <button
                   type="button"
                   className={styles.modalActionBtn}
-                  onClick={handleApplianceComplete}
+                  onClick={handleFurnitureSelectionComplete}
                 >
                   선택 완료
                 </button>
@@ -795,8 +983,8 @@ function Chatbot() {
         )}
 
         {lifestyleModalOpen && (
-          <div className={styles.modalOverlay} onClick={submitLifestyleSelection}>
-            <div className={styles.modalCard} onClick={(e) => e.stopPropagation()}>
+          <div className={styles.modalOverlay}>
+            <div className={styles.modalCard}>
               <div className={styles.modalHeader}>
                 <div>
                   <p className={styles.modalEyebrow}>STEP 5</p>
@@ -809,14 +997,6 @@ function Chatbot() {
                   </p>
                   <p className={styles.modalPageIndicator}>{activeLifestyleTab} / 2 페이지</p>
                 </div>
-                <button
-                  type="button"
-                  className={styles.modalCloseBtn}
-                  onClick={submitLifestyleSelection}
-                  aria-label="모달 닫기"
-                >
-                  ×
-                </button>
               </div>
 
               <div className={styles.lifestyleCategoryGrid}>
@@ -886,6 +1066,7 @@ function Chatbot() {
               selectedInteriorStyle={selectedInteriorStyle}
               interiorStyleSelectionEnabled={currentStage === "interiorStyle"}
               onInteriorStyleSelect={handleInteriorStyleSelect}
+              onRefreshInteriorImages={refreshInteriorImages}
             />
           ))}
           <div ref={messagesEndRef} />
@@ -897,9 +1078,38 @@ function Chatbot() {
               <button
                 type="button"
                 className={styles.recommendCtaBtn}
-                onClick={() => navigate("/recommendchatbot")}
+                disabled={isLoadingRecommend}
+                onClick={async () => {
+                  if (isLoadingRecommend) return;
+                  if (!convId) {
+                    enqueueBotMessages(["로그인 후 이용 가능합니다. 로그인 해주세요."]);
+                    return;
+                  }
+                  setIsLoadingRecommend(true);
+                  try {
+                    const result = await fetchRecommendations(convId, 1);
+                    if (result.recommendations.length === 0) {
+                      enqueueBotMessages(["추천 결과가 아직 준비되지 않았어요. 잠시 후 다시 시도해 주세요."]);
+                      setIsLoadingRecommend(false);
+                      return;
+                    }
+                    console.log("[Chatbot] confirmedOwnedLabels:", confirmedOwnedLabels);
+                    navigate("/recommendchatbot", {
+                      state: { convId, lifeType, interiorStyle: selectedInteriorStyle, ownedAppliances: confirmedOwnedLabels, recommendations: result },
+                    });
+                  } catch (err) {
+                    console.error("추천 조회 실패:", err);
+                    enqueueBotMessages(["추천 목록을 불러오는데 실패했어요. 다시 시도해 주세요."]);
+                    setIsLoadingRecommend(false);
+                  }
+                }}
               >
-                추천 리스트 보기
+                {isLoadingRecommend ? (
+                  <>
+                    <span className={styles.loadingSpinner} />
+                    추천 리스트 생성 중...
+                  </>
+                ) : "추천 리스트 보기"}
               </button>
             </div>
           )}

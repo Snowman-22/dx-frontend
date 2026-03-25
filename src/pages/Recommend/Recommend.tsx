@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { prestartChat, startChat, toStarterPackageType } from "@/services/chatService";
 import snowLogo from "../../assets/images/snow_logo.png";
 import styles from "./Recommend.module.css";
 
@@ -71,6 +72,8 @@ const LIFE_TYPES: LifeTypeCard[] = [
 function Recommend() {
   const [selected, setSelected] = useState<LifeTypeId | null>(null);
   const [isLoginPromptOpen, setIsLoginPromptOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { isLoggedIn } = useAuth();
 
@@ -79,15 +82,37 @@ function Recommend() {
     lifeType: selected,
   });
 
-  const handleStart = () => {
+  const handleStart = async () => {
     if (!selected) return;
 
-    if (isLoggedIn) {
-      navigate("/chatbot", { state: { lifeType: selected } });
+    if (!isLoggedIn) {
+      setIsLoginPromptOpen(true);
       return;
     }
 
-    setIsLoginPromptOpen(true);
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      // 1. prestart → starter_package_id
+      const packageType = toStarterPackageType(selected);
+      const starterPackageId = await prestartChat(packageType);
+
+      // 2. start → chat session
+      const session = await startChat(starterPackageId);
+
+      // 3. 세션 정보와 함께 chatbot으로 이동
+      navigate("/chatbot", {
+        state: {
+          lifeType: selected,
+          chatSession: session,
+        },
+      });
+    } catch (err) {
+      console.error("채팅 세션 생성 실패:", err);
+      setError("채팅 세션을 생성하지 못했습니다. 다시 시도해주세요.");
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -165,13 +190,14 @@ function Recommend() {
           ))}
         </div>
 
+        {error && <p className={styles.errorText}>{error}</p>}
         <button
           type="button"
           className={styles.startBtn}
-          disabled={!selected}
+          disabled={!selected || isLoading}
           onClick={handleStart}
         >
-          선택한 유형으로 시작하기
+          {isLoading ? "채팅방 준비 중..." : "선택한 유형으로 시작하기"}
         </button>
       </section>
 

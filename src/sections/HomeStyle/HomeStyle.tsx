@@ -12,7 +12,7 @@ const CARDS = [
   {
     id: 2,
     tag: "공간별 가전",
-    title: "공간에 맞는\n가전 추천",
+    title: "공간에 맞는\nHome Canvas",
     subtitle: "거실, 주방, 침실 맞춤 가전",
     link: "/home-style/space",
   },

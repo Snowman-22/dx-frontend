@@ -1,8 +1,5 @@
 {
   "rewrites": [
-    {
-      "source": "/api/:path*",
-      "destination": "http://54.180.223.140:8080/api/:path*"
-    }
+    { "source": "/((?!api|ws|sim-api).*)", "destination": "/" }
   ]
 }

@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import {
   FiArrowRight,
@@ -9,8 +10,10 @@ import {
   FiShoppingCart,
   FiStar,
   FiUser,
+  FiX,
 } from "react-icons/fi";
 import { useAuth } from "@/contexts/AuthContext";
+import simulationApi from "@/services/simulationApi";
 import styles from "./MyPage.module.css";
 
 const CART_ITEMS = [
@@ -45,36 +48,70 @@ const CHAT_HISTORY = [
   },
 ];
 
-const FLOOR_PLAN_HISTORY = [
-  {
-    id: "plan-1",
-    title: "거실 중심 2D 배치도",
-    description: "TV, 소파, 공기청정기 배치를 고려한 기본 평면도",
-    meta: "최종 수정: 2026.03.19",
-  },
-  {
-    id: "plan-2",
-    title: "주방 확장형 배치도",
-    description: "냉장고, 식기세척기, 수납장을 반영한 동선 중심 구성",
-    meta: "최종 수정: 2026.03.17",
-  },
-];
+type SnapshotItem = {
+  session_id: number;
+  session_name: string;
+  floor_plan_name: string;
+  category: string;
+  area_m2: number | null;
+  has_2d: boolean;
+  has_3d: boolean;
+  snapshot_3d_url: string | null;
+  saved_at: string | null;
+};
 
-const RENDERED_SHOTS = [
-  {
-    id: "render-1",
-    title: "웜 뉴트럴 거실 3D",
-    description: "우드톤 가구와 올리브 포인트를 적용한 시안",
-  },
-  {
-    id: "render-2",
-    title: "미니멀 다이닝 3D",
-    description: "식탁과 냉장고 중심의 주방-다이닝 연결 시안",
-  },
-];
+type SnapshotDetail = {
+  snapshot_2d: string | null;
+  snapshot_3d_url: string | null;
+  saved_at: string | null;
+};
+
+function formatDate(iso: string | null) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, "0")}.${String(d.getDate()).padStart(2, "0")} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
 
 function MyPage() {
   const { user, isLoggedIn } = useAuth();
+  const [snapshots, setSnapshots] = useState<SnapshotItem[]>([]);
+  const [viewerImage, setViewerImage] = useState<string | null>(null);
+  const [viewerTitle, setViewerTitle] = useState("");
+  const [isLoadingImage, setIsLoadingImage] = useState(false);
+
+  useEffect(() => {
+    simulationApi
+      .get<SnapshotItem[]>("/snapshots")
+      .then(({ data }) => setSnapshots(data))
+      .catch((err) => console.error("Failed to load snapshots:", err));
+  }, []);
+
+  const floorPlanSnapshots = snapshots.filter((s) => s.has_2d);
+  const renderedSnapshots = snapshots.filter((s) => s.has_3d);
+
+  const openSnapshot = async (sessionId: number, type: "2d" | "3d", title: string) => {
+    if (type === "3d") {
+      const item = snapshots.find((s) => s.session_id === sessionId);
+      if (item?.snapshot_3d_url) {
+        setViewerTitle(title);
+        setViewerImage(item.snapshot_3d_url);
+      }
+      return;
+    }
+
+    setIsLoadingImage(true);
+    setViewerTitle(title);
+    try {
+      const { data } = await simulationApi.get<SnapshotDetail>(
+        `/sessions/${sessionId}/snapshot`,
+      );
+      setViewerImage(data.snapshot_2d);
+    } catch {
+      alert("이미지를 불러올 수 없습니다.");
+    } finally {
+      setIsLoadingImage(false);
+    }
+  };
 
   if (!isLoggedIn || !user) {
     return <Navigate to="/login" replace state={{ redirectTo: "/mypage" }} />;
@@ -111,12 +148,12 @@ function MyPage() {
               </div>
               <div className={styles.summaryCard}>
                 <FiGrid size={18} />
-                <strong>{FLOOR_PLAN_HISTORY.length}</strong>
+                <strong>{floorPlanSnapshots.length}</strong>
                 <span>받은 배치도면</span>
               </div>
               <div className={styles.summaryCard}>
                 <FiImage size={18} />
-                <strong>{RENDERED_SHOTS.length}</strong>
+                <strong>{renderedSnapshots.length}</strong>
                 <span>3D 이미지</span>
               </div>
             </div>
@@ -199,24 +236,33 @@ function MyPage() {
                 </div>
                 <div>
                   <h3 className={styles.panelTitle}>내가 받은 배치도면</h3>
-                  <p className={styles.panelSub}>상담과 시뮬레이션으로 저장된 도면 시안을 확인하세요.</p>
+                  <p className={styles.panelSub}>시뮬레이션에서 저장한 2D 도면을 확인하세요.</p>
                 </div>
               </div>
               <div className={styles.visualGrid}>
-                {FLOOR_PLAN_HISTORY.map((item, index) => (
-                  <div key={item.id} className={styles.visualCard}>
-                    <div className={`${styles.visualPreview} ${styles[`floorTone${index + 1}`]}`}>
-                      <div className={styles.roomBoxLarge} />
-                      <div className={styles.roomBoxSmall} />
-                      <div className={styles.roomLine} />
+                {floorPlanSnapshots.length === 0 ? (
+                  <p style={{ color: "#999", padding: "20px 0" }}>저장된 배치도면이 없습니다.</p>
+                ) : (
+                  floorPlanSnapshots.map((item, index) => (
+                    <div
+                      key={item.session_id}
+                      className={styles.visualCard}
+                      style={{ cursor: "pointer" }}
+                      onClick={() => openSnapshot(item.session_id, "2d", `${item.floor_plan_name} 배치도`)}
+                    >
+                      <div className={`${styles.visualPreview} ${styles[`floorTone${(index % 2) + 1}`]}`}>
+                        <div className={styles.roomBoxLarge} />
+                        <div className={styles.roomBoxSmall} />
+                        <div className={styles.roomLine} />
+                      </div>
+                      <div className={styles.visualText}>
+                        <strong>{item.floor_plan_name}</strong>
+                        <p>{item.category} · {item.area_m2 ? `${item.area_m2}m²` : ""}</p>
+                        <span>{item.saved_at ? formatDate(item.saved_at) : ""}</span>
+                      </div>
                     </div>
-                    <div className={styles.visualText}>
-                      <strong>{item.title}</strong>
-                      <p>{item.description}</p>
-                      <span>{item.meta}</span>
-                    </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </article>
 
@@ -227,27 +273,45 @@ function MyPage() {
                 </div>
                 <div>
                   <h3 className={styles.panelTitle}>내 3D 이미지</h3>
-                  <p className={styles.panelSub}>공간 분위기와 가전 배치를 입체적으로 살펴볼 수 있어요.</p>
+                  <p className={styles.panelSub}>AI가 생성한 3D 인테리어 이미지를 확인하세요.</p>
                 </div>
               </div>
               <div className={styles.renderGrid}>
-                {RENDERED_SHOTS.map((item, index) => (
-                  <div key={item.id} className={styles.renderCard}>
-                    <div className={`${styles.renderPreview} ${styles[`renderTone${index + 1}`]}`}>
-                      <div className={styles.renderMain} />
-                      <div className={styles.renderSide} />
-                      <div className={styles.renderBottom} />
+                {renderedSnapshots.length === 0 ? (
+                  <p style={{ color: "#999", padding: "20px 0" }}>저장된 3D 이미지가 없습니다.</p>
+                ) : (
+                  renderedSnapshots.map((item) => (
+                    <div
+                      key={`3d-${item.session_id}`}
+                      className={styles.renderCard}
+                      style={{ cursor: "pointer" }}
+                      onClick={() => openSnapshot(item.session_id, "3d", `${item.floor_plan_name} 3D`)}
+                    >
+                      <div className={styles.renderPreview} style={{ overflow: "hidden" }}>
+                        {item.snapshot_3d_url ? (
+                          <img
+                            src={item.snapshot_3d_url}
+                            alt={item.floor_plan_name}
+                            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                          />
+                        ) : (
+                          <>
+                            <div className={styles.renderMain} />
+                            <div className={styles.renderSide} />
+                          </>
+                        )}
+                      </div>
+                      <div className={styles.visualText}>
+                        <strong>{item.floor_plan_name} 3D</strong>
+                        <p>{item.category} · {item.area_m2 ? `${item.area_m2}m²` : ""}</p>
+                        <span className={styles.inlineAction}>
+                          자세히 보기
+                          <FiArrowRight size={14} />
+                        </span>
+                      </div>
                     </div>
-                    <div className={styles.visualText}>
-                      <strong>{item.title}</strong>
-                      <p>{item.description}</p>
-                      <span className={styles.inlineAction}>
-                        자세히 보기
-                        <FiArrowRight size={14} />
-                      </span>
-                    </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </article>
           </div>
@@ -285,6 +349,44 @@ function MyPage() {
           </div>
         </div>
       </section>
+      {viewerImage && (
+        <div
+          style={{
+            position: "fixed", inset: 0, zIndex: 9999,
+            background: "rgba(0,0,0,0.75)", display: "flex",
+            alignItems: "center", justifyContent: "center",
+          }}
+          onClick={() => { setViewerImage(null); setViewerTitle(""); }}
+        >
+          <div
+            style={{
+              position: "relative", background: "#fff", borderRadius: 12,
+              padding: 16, maxWidth: "90vw", maxHeight: "90vh",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+              <strong style={{ fontSize: 16 }}>{viewerTitle}</strong>
+              <button
+                type="button"
+                onClick={() => { setViewerImage(null); setViewerTitle(""); }}
+                style={{ background: "none", border: "none", cursor: "pointer", padding: 4 }}
+              >
+                <FiX size={20} />
+              </button>
+            </div>
+            {isLoadingImage ? (
+              <div style={{ padding: "60px 120px", textAlign: "center", color: "#999" }}>불러오는 중...</div>
+            ) : (
+              <img
+                src={viewerImage}
+                alt={viewerTitle}
+                style={{ maxWidth: "85vw", maxHeight: "80vh", objectFit: "contain", borderRadius: 8 }}
+              />
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -5,6 +5,9 @@ import path from "path";
 
 export default defineConfig({
   plugins: [react(), svgr()],
+  define: {
+    global: "globalThis",
+  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "src"),
@@ -13,8 +16,18 @@ export default defineConfig({
   server: {
     proxy: {
       "/api": {
-        target: "http://54.180.223.140:8080",
+        target: "http://54.116.93.66:8080",
         changeOrigin: true,
+      },
+      "/ws": {
+        target: "http://54.116.93.66:8080",
+        changeOrigin: true,
+        ws: true,
+      },
+      "/sim-api": {
+        target: "http://localhost:8000",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/sim-api/, "/api"),
       },
     },
   },

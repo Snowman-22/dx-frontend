@@ -25,7 +25,7 @@ const NAV_ITEMS = [
   { label: "베스트샵", path: "/best-shop" },
   { label: "LG AI", path: "/lg-ai" },
   { label: "홈스타일", path: "/home-style", highlight: true },
-  { label: "가전 추천", path: "/recommend", highlight: true, highlightColor: "#83E3CB" },
+  { label: "Home Canvas", path: "/recommend", highlight: true, highlightColor: "#83E3CB" },
 ];
 
 const BRAND_ITEMS = [

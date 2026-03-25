@@ -1,18 +1,19 @@
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, useCallback, type FormEvent } from "react";
 import { FiArrowUp, FiChevronDown, FiHome, FiPlus, FiShoppingCart } from "react-icons/fi";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import chatbotIcon from "../../assets/images/chatbot_icon.png";
-import airPurifierImage from "../../assets/images/lg_appliances/Air_Purifier.avif";
-import clothingCareImage from "../../assets/images/lg_appliances/Clothing_Care.avif";
-import dishwasherImage from "../../assets/images/lg_appliances/Dishwasher.avif";
-import inductionImage from "../../assets/images/lg_appliances/Induction.avif";
-import refrigeratorImage from "../../assets/images/lg_appliances/Refrigerator.avif";
 import snowLogo from "../../assets/images/snow_logo.png";
-import washingMachineImage from "../../assets/images/lg_appliances/Washing_Machine.avif";
-import waterPurifierImage from "../../assets/images/lg_appliances/Water_Purifier.avif";
+import {
+  connectStomp,
+  disconnectStomp,
+  subscribeTopic,
+  sendRecommendRag,
+} from "@/services/chatService";
+import type { RecommendationsPageResponse } from "@/services/chatService";
 import styles from "./RecommendChatbot.module.css";
 
 type RecommendAppliance = {
+  product_id: number;
   name: string;
   category: string;
   totalPrice: number;
@@ -23,6 +24,7 @@ type RecommendAppliance = {
 };
 
 type RecommendFurniture = {
+  product_id: number;
   name: string;
   category: string;
   price: number;
@@ -31,21 +33,12 @@ type RecommendFurniture = {
 };
 
 type RecommendPackage = {
+  id: number;
   title: string;
   typeLabel: string;
   appliances: RecommendAppliance[];
   furniture: RecommendFurniture[];
   recommendationReason: string;
-};
-
-type RecommendPackagesResponse = readonly [
-  RecommendPackage,
-  RecommendPackage,
-  RecommendPackage,
-];
-
-type BackendRecommendPackagesPayload = {
-  packages: RecommendPackagesResponse;
 };
 
 type ChatMessage = {
@@ -60,6 +53,15 @@ const formatPrice = (price: number) => `${price.toLocaleString("ko-KR")}원`;
 
 const getPackageTotalPrice = (recommendPackage: RecommendPackage) =>
   recommendPackage.appliances.reduce((sum, item) => sum + item.totalPrice, 0) +
+  recommendPackage.furniture.reduce((sum, item) => sum + item.price, 0);
+
+const getApplianceTotalPrice = (recommendPackage: RecommendPackage) =>
+  recommendPackage.appliances.reduce((sum, item) => sum + item.totalPrice, 0);
+
+const getApplianceSubscriptionTotal = (recommendPackage: RecommendPackage) =>
+  recommendPackage.appliances.reduce((sum, item) => sum + item.subscriptionPrice, 0);
+
+const getFurnitureTotalPrice = (recommendPackage: RecommendPackage) =>
   recommendPackage.furniture.reduce((sum, item) => sum + item.price, 0);
 
 const getPackageItemCount = (recommendPackage: RecommendPackage) =>
@@ -78,261 +80,49 @@ const getPackagePopularityScore = (recommendPackage: RecommendPackage) => {
   return totalScore / recommendPackage.appliances.length;
 };
 
-const createFurnitureImage = (fill: string, accent: string, shape: string) =>
-  `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220">
-      <rect width="220" height="220" rx="28" fill="#f7f5ef" />
-      ${shape}
-      <rect x="26" y="178" width="168" height="10" rx="5" fill="${fill}" opacity="0.14" />
-      <circle cx="178" cy="40" r="14" fill="${accent}" opacity="0.18" />
-    </svg>
-  `)}`;
+// ─── API 응답 → RecommendPackage 변환 ───
 
-const lampImage = createFurnitureImage(
-  "#c25a2d",
-  "#ff8f5d",
-  `
-    <circle cx="92" cy="88" r="34" fill="#d95f36" />
-    <circle cx="92" cy="88" r="22" fill="#fff5ed" />
-    <rect x="86" y="116" width="12" height="34" rx="6" fill="#90452f" />
-    <ellipse cx="92" cy="158" rx="28" ry="14" fill="#d95f36" />
-  `,
-);
+function parseRecommendations(response: RecommendationsPageResponse): RecommendPackage[] {
+  return response.recommendations.map((rec, index) => {
+    let appliances: RecommendAppliance[] = [];
+    let furniture: RecommendFurniture[] = [];
 
-const deskLampImage = createFurnitureImage(
-  "#333333",
-  "#92b8de",
-  `
-    <rect x="98" y="62" width="10" height="78" rx="5" transform="rotate(26 103 101)" fill="#2f353a" />
-    <rect x="74" y="106" width="10" height="62" rx="5" transform="rotate(-28 79 137)" fill="#2f353a" />
-    <rect x="114" y="48" width="42" height="14" rx="7" transform="rotate(-24 135 55)" fill="#2f353a" />
-    <circle cx="82" cy="111" r="8" fill="#2f353a" />
-    <circle cx="104" cy="142" r="8" fill="#2f353a" />
-    <rect x="54" y="156" width="70" height="10" rx="5" fill="#2f353a" />
-  `,
-);
+    try {
+      const parsed = JSON.parse(rec.products);
+      console.log("[parseRecommendations] raw appliance[0]:", parsed.appliances?.[0]);
+      console.log("[parseRecommendations] raw furniture[0]:", parsed.furniture?.[0]);
+      appliances = (parsed.appliances ?? []).map((a: Record<string, unknown>) => ({
+        product_id: (a.product_id as number) ?? (a.productId as number) ?? 0,
+        name: a.name as string,
+        category: a.category as string,
+        totalPrice: (a.totalPrice as number) ?? 0,
+        subscriptionPrice: (a.subscriptionPrice as number) ?? 0,
+        image: (a.image as string) ?? "",
+        productUrl: (a.productUrl as string) ?? "",
+        popularityScore: (a.popularityScore as number) ?? 0,
+      }));
+      furniture = (parsed.furniture ?? []).map((f: Record<string, unknown>) => ({
+        product_id: (f.product_id as number) ?? (f.productId as number) ?? 0,
+        name: f.name as string,
+        category: f.category as string,
+        price: (f.price as number) ?? 0,
+        image: (f.image as string) ?? "",
+        productUrl: (f.productUrl as string) ?? "",
+      }));
+    } catch {
+      console.error("products JSON 파싱 실패:", rec.products);
+    }
 
-const slipperImage = createFurnitureImage(
-  "#8ea8cf",
-  "#6c8fc0",
-  `
-    <rect x="56" y="104" width="52" height="42" rx="18" transform="rotate(-12 82 125)" fill="#87a5d1" />
-    <rect x="114" y="100" width="52" height="42" rx="18" transform="rotate(8 140 121)" fill="#87a5d1" />
-    <path d="M60 116c11-10 27-13 41-6" fill="none" stroke="#c5d6ee" stroke-width="8" stroke-linecap="round" />
-    <path d="M118 113c11-10 27-13 41-6" fill="none" stroke="#c5d6ee" stroke-width="8" stroke-linecap="round" />
-  `,
-);
-
-const sofaImage = createFurnitureImage(
-  "#b68b4e",
-  "#d5ad6d",
-  `
-    <rect x="60" y="84" width="100" height="68" rx="30" fill="#b88a50" />
-    <rect x="44" y="92" width="34" height="72" rx="17" fill="#b88a50" />
-    <rect x="142" y="92" width="34" height="72" rx="17" fill="#b88a50" />
-    <rect x="70" y="152" width="12" height="22" rx="6" fill="#8d6736" />
-    <rect x="138" y="152" width="12" height="22" rx="6" fill="#8d6736" />
-  `,
-);
-
-const BACKEND_RECOMMEND_PACKAGE_PAYLOAD: BackendRecommendPackagesPayload = {
-  packages: [
-    {
-      title: "추천 패키지 1",
-      typeLabel: "FLEX TYPE",
-      appliances: [
-        {
-          name: "LG 디오스 인덕션",
-          category: "주방 가전",
-          totalPrice: 1711200,
-          subscriptionPrice: 36100,
-          image: inductionImage,
-          productUrl: "",
-          popularityScore: 94,
-        },
-        {
-          name: "LG 오브제컬렉션 냉장고",
-          category: "주방 가전",
-          totalPrice: 2890000,
-          subscriptionPrice: 58900,
-          image: refrigeratorImage,
-          productUrl: "",
-          popularityScore: 97,
-        },
-        {
-          name: "LG 디오스 식기세척기",
-          category: "주방 가전",
-          totalPrice: 1540000,
-          subscriptionPrice: 31900,
-          image: dishwasherImage,
-          productUrl: "",
-          popularityScore: 88,
-        },
-        {
-          name: "LG 퓨리케어 정수기",
-          category: "생활 가전",
-          totalPrice: 1290000,
-          subscriptionPrice: 27900,
-          image: waterPurifierImage,
-          productUrl: "",
-          popularityScore: 91,
-        },
-      ],
-      furniture: [
-        {
-          name: "Eclisse 4colors",
-          category: "조명",
-          price: 396000,
-          image: lampImage,
-          productUrl: "",
-        },
-        {
-          name: "Tizio",
-          category: "조명",
-          price: 765000,
-          image: deskLampImage,
-          productUrl: "",
-        },
-        {
-          name: "와플 거실 슬리퍼",
-          category: "생활 소품",
-          price: 10100,
-          image: slipperImage,
-          productUrl: "",
-        },
-        {
-          name: "모듈 패브릭 소파",
-          category: "거실 가구",
-          price: 1342500,
-          image: sofaImage,
-          productUrl: "",
-        },
-      ],
-      recommendationReason:
-        "주방 동선과 기본 생활 가전을 먼저 구성하고, 공간 분위기를 살려주는 조명과 소품까지 함께 제안한 조합입니다.",
-    },
-    {
-      title: "추천 패키지 2",
-      typeLabel: "TYPE",
-      appliances: [
-        {
-          name: "LG 트롬 세탁기",
-          category: "세탁 가전",
-          totalPrice: 1980000,
-          subscriptionPrice: 42900,
-          image: washingMachineImage,
-          productUrl: "",
-          popularityScore: 92,
-        },
-        {
-          name: "LG 스타일러",
-          category: "의류 관리기",
-          totalPrice: 1760000,
-          subscriptionPrice: 38900,
-          image: clothingCareImage,
-          productUrl: "",
-          popularityScore: 86,
-        },
-        {
-          name: "LG 퓨리케어 공기청정기",
-          category: "공기 관리",
-          totalPrice: 990000,
-          subscriptionPrice: 22100,
-          image: airPurifierImage,
-          productUrl: "",
-          popularityScore: 89,
-        },
-      ],
-      furniture: [
-        {
-          name: "코지 라운지 체어",
-          category: "리빙 체어",
-          price: 689000,
-          image: sofaImage,
-          productUrl: "",
-        },
-        {
-          name: "무드 테이블 램프",
-          category: "조명",
-          price: 129000,
-          image: lampImage,
-          productUrl: "",
-        },
-      ],
-      recommendationReason:
-        "의류 관리와 공기 관리에 집중한 가전 구성에 휴식감을 더해 주는 가구를 조합해 생활 만족도를 높이도록 구성했습니다.",
-    },
-    {
-      title: "추천 패키지 3",
-      typeLabel: "FLEX TYPE",
-      appliances: [
-        {
-          name: "LG 디오스 인덕션",
-          category: "주방 가전",
-          totalPrice: 1711200,
-          subscriptionPrice: 36100,
-          image: inductionImage,
-          productUrl: "",
-          popularityScore: 94,
-        },
-        {
-          name: "LG 디오스 식기세척기",
-          category: "주방 가전",
-          totalPrice: 1540000,
-          subscriptionPrice: 31900,
-          image: dishwasherImage,
-          productUrl: "",
-          popularityScore: 88,
-        },
-        {
-          name: "LG 오브제컬렉션 냉장고",
-          category: "주방 가전",
-          totalPrice: 2890000,
-          subscriptionPrice: 58900,
-          image: refrigeratorImage,
-          productUrl: "",
-          popularityScore: 97,
-        },
-        {
-          name: "LG 스타일러",
-          category: "의류 관리기",
-          totalPrice: 1760000,
-          subscriptionPrice: 38900,
-          image: clothingCareImage,
-          productUrl: "",
-          popularityScore: 86,
-        },
-        {
-          name: "LG 퓨리케어 공기청정기",
-          category: "공기 관리",
-          totalPrice: 990000,
-          subscriptionPrice: 22100,
-          image: airPurifierImage,
-          productUrl: "",
-          popularityScore: 89,
-        },
-      ],
-      furniture: [
-        {
-          name: "패브릭 슬리퍼",
-          category: "생활 소품",
-          price: 18900,
-          image: slipperImage,
-          productUrl: "",
-        },
-        {
-          name: "아틀리에 데스크 램프",
-          category: "조명",
-          price: 239000,
-          image: deskLampImage,
-          productUrl: "",
-        },
-      ],
-      recommendationReason:
-        "주방과 생활 가전을 균형 있게 구성하고, 조명과 소품으로 공간 인상을 부드럽게 보완한 패키지입니다.",
-    },
-  ],
-};
+    return {
+      id: rec.recommendation_id,
+      title: `추천 패키지 ${index + 1}`,
+      typeLabel: rec.package_name ?? "",
+      appliances,
+      furniture,
+      recommendationReason: rec.reason ?? "",
+    };
+  });
+}
 
 const INITIAL_CHAT_MESSAGES: ChatMessage[] = [
   {
@@ -342,16 +132,66 @@ const INITIAL_CHAT_MESSAGES: ChatMessage[] = [
   },
 ];
 
+type LocationState = {
+  convId?: string;
+  lifeType?: string;
+  interiorStyle?: string;
+  ownedAppliances?: string[];
+  recommendations?: RecommendationsPageResponse;
+} | null;
+
 function RecommendChatbot() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const state = location.state as LocationState;
+  const convId = state?.convId ?? null;
+
   const [isChatOpen, setIsChatOpen] = useState(true);
   const [chatInputValue, setChatInputValue] = useState("");
   const [chatMessages, setChatMessages] = useState(INITIAL_CHAT_MESSAGES);
   const [expandedPackages, setExpandedPackages] = useState<Record<string, boolean>>({});
   const [selectedSort, setSelectedSort] = useState<PackageSortType>("default");
+  const [isWaitingResponse, setIsWaitingResponse] = useState(false);
+  const [recommendPackages, setRecommendPackages] = useState<RecommendPackage[]>(() =>
+    state?.recommendations ? parseRecommendations(state.recommendations) : [],
+  );
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasNoMore, setHasNoMore] = useState(() =>
+    state?.recommendations ? !state.recommendations.has_next : false,
+  );
+  const maxPage = 3;
   const collapsedApplianceLimit = isChatOpen ? 4 : 5;
-  const recommendPackages = BACKEND_RECOMMEND_PACKAGE_PAYLOAD.packages;
   const chatMessagesRef = useRef<HTMLDivElement | null>(null);
+  const stompInitRef = useRef(false);
+
+  const handleLoadMore = useCallback(async () => {
+    if (!convId || isLoadingMore || currentPage >= maxPage) return;
+    const nextPage = currentPage + 1;
+    setIsLoadingMore(true);
+
+    try {
+      const { fetchRecommendations } = await import("@/services/chatService");
+      const response = await fetchRecommendations(convId, nextPage, 1, 0);
+
+      if (response.recommendations.length === 0) {
+        setHasNoMore(true);
+      } else {
+        const newPackages = parseRecommendations(response);
+        setRecommendPackages(newPackages);
+        setCurrentPage(nextPage);
+        setExpandedPackages({});
+        if (!response.has_next || nextPage >= maxPage) {
+          setHasNoMore(true);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to load more recommendations:", err);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }, [convId, isLoadingMore, currentPage]);
+
   const sortedRecommendPackages = [...recommendPackages].sort((leftPackage, rightPackage) => {
     if (selectedSort === "price") {
       return getPackageTotalPrice(leftPackage) - getPackageTotalPrice(rightPackage);
@@ -364,6 +204,49 @@ function RecommendChatbot() {
     return 0;
   });
 
+  // STOMP 연결 + 구독
+  useEffect(() => {
+    if (!convId || stompInitRef.current) return;
+    stompInitRef.current = true;
+
+    let unsubscribe: (() => void) | null = null;
+
+    const init = async () => {
+      try {
+        await connectStomp();
+        console.log("[RecommendChatbot] STOMP connected, subscribing...");
+
+        unsubscribe = subscribeTopic(convId, (body) => {
+          // 서버 응답 수신 → aiResponse 우선 파싱
+          const text =
+            (body.aiResponse as string) ??
+            (body.assistantText as string) ??
+            (body.answer as string) ??
+            (body.message as string) ??
+            JSON.stringify(body);
+
+          setChatMessages((prev) => [
+            ...prev,
+            {
+              id: `assistant-${Date.now()}`,
+              role: "assistant" as const,
+              text,
+            },
+          ]);
+          setIsWaitingResponse(false);
+        });
+      } catch (err) {
+        console.error("[RecommendChatbot] STOMP init failed:", err);
+      }
+    };
+
+    init();
+
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  }, [convId]);
+
   useEffect(() => {
     if (!isChatOpen || !chatMessagesRef.current) {
       return;
@@ -372,29 +255,45 @@ function RecommendChatbot() {
     chatMessagesRef.current.scrollTop = chatMessagesRef.current.scrollHeight;
   }, [chatMessages, isChatOpen]);
 
-  const handleChatSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const trimmedValue = chatInputValue.trim();
+  const handleChatSubmit = useCallback(
+    (event: FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      const trimmedValue = chatInputValue.trim();
 
-    if (!trimmedValue) {
-      return;
-    }
+      if (!trimmedValue || isWaitingResponse) {
+        return;
+      }
 
-    setChatMessages((prev) => [
-      ...prev,
-      {
-        id: `user-${Date.now()}`,
-        role: "user",
-        text: trimmedValue,
-      },
-      {
-        id: `assistant-${Date.now()}`,
-        role: "assistant",
-        text: trimmedValue,
-      },
-    ]);
-    setChatInputValue("");
-  };
+      // 사용자 메시지 추가
+      setChatMessages((prev) => [
+        ...prev,
+        {
+          id: `user-${Date.now()}`,
+          role: "user",
+          text: trimmedValue,
+        },
+      ]);
+      setChatInputValue("");
+
+      // STOMP로 RECOMMEND_RAG 전송 (convId가 있을 때만)
+      if (convId) {
+        setIsWaitingResponse(true);
+        sendRecommendRag(convId, trimmedValue);
+        console.log("[RecommendChatbot] Sent RECOMMEND_RAG:", trimmedValue);
+      } else {
+        // convId 없으면 로컬에서만 표시
+        setChatMessages((prev) => [
+          ...prev,
+          {
+            id: `assistant-${Date.now()}`,
+            role: "assistant",
+            text: "서버와 연결되지 않았습니다. 채팅을 처음부터 다시 시작해 주세요.",
+          },
+        ]);
+      }
+    },
+    [chatInputValue, convId, isWaitingResponse],
+  );
 
   const togglePackage = (title: string) => {
     setExpandedPackages((prev) => ({
@@ -452,6 +351,12 @@ function RecommendChatbot() {
           </div>
 
           <div className={styles.packageList}>
+            {recommendPackages.length === 0 && (
+              <div style={{ textAlign: "center", padding: "60px 20px", color: "#888" }}>
+                <p style={{ fontSize: 18, fontWeight: 600, marginBottom: 8 }}>추천 패키지가 없습니다</p>
+                <p style={{ fontSize: 14 }}>채팅을 통해 조건을 입력하면 맞춤 패키지를 추천해 드립니다.</p>
+              </div>
+            )}
             {sortedRecommendPackages.map((recommendPackage) => {
               const isExpanded = expandedPackages[recommendPackage.title] ?? false;
               const applianceItems = recommendPackage.appliances;
@@ -463,19 +368,37 @@ function RecommendChatbot() {
                 furnitureItems.length > 0 || applianceItems.length > visibleApplianceItems.length;
 
               return (
-                <section key={recommendPackage.title} className={styles.packageSection}>
+                <section key={recommendPackage.id} className={styles.packageSection}>
                   <div className={styles.packageHeader}>
                     <div className={styles.packageHeadingRow}>
                       <h2 className={styles.packageTitle}>{recommendPackage.title}</h2>
                       <span className={styles.packageMeta}>
-                        {`{${recommendPackage.typeLabel}} | 총 예상 결제액 ${Math.round(
-                          getPackageTotalPrice(recommendPackage) / 10000,
-                        ).toLocaleString("ko-KR")}만원`}
+                        {recommendPackage.typeLabel} | {getPackageItemCount(recommendPackage)}개 상품
                       </span>
                     </div>
-                    <button
-                      type="button"
-                      className={styles.optionBtn}
+                    <div className={styles.packageSubRow}>
+                      <div className={styles.packagePriceRow}>
+                        <div className={styles.packagePriceGroup}>
+                          <span className={styles.packagePriceLabel}>가전 구독</span>
+                          <strong className={styles.packageSubscriptionPrice}>
+                            월 {formatPrice(getApplianceSubscriptionTotal(recommendPackage))}
+                          </strong>
+                          <span className={styles.packagePriceSub}>
+                            일시불 {Math.round(getApplianceTotalPrice(recommendPackage) / 10000).toLocaleString("ko-KR")}만원
+                          </span>
+                        </div>
+                        {recommendPackage.furniture.length > 0 && (
+                          <div className={styles.packagePriceGroup}>
+                            <span className={styles.packagePriceLabel}>가구</span>
+                            <strong className={styles.packageFurniturePrice}>
+                              {Math.round(getFurnitureTotalPrice(recommendPackage) / 10000).toLocaleString("ko-KR")}만원
+                            </strong>
+                          </div>
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        className={styles.optionBtn}
                       onClick={() => {
                         if (hasMoreItems) {
                           togglePackage(recommendPackage.title);
@@ -483,8 +406,9 @@ function RecommendChatbot() {
                       }}
                       disabled={!hasMoreItems}
                     >
-                      {hasMoreItems && isExpanded ? "옵션 접기" : "옵션 더보기"}
-                    </button>
+                        {hasMoreItems && isExpanded ? "옵션 접기" : "옵션 더보기"}
+                      </button>
+                    </div>
                   </div>
 
                   <div className={styles.packageCard}>
@@ -495,7 +419,7 @@ function RecommendChatbot() {
                           <div className={styles.productGrid}>
                             {applianceItems.map((item) => (
                               <div
-                                key={`${recommendPackage.title}-${item.name}`}
+                                key={`${recommendPackage.id}-${item.name}`}
                                 className={styles.productCard}
                               >
                                 <div className={styles.productImageWrap}>
@@ -507,14 +431,33 @@ function RecommendChatbot() {
                                 </div>
                                 <strong className={styles.productName}>{item.name}</strong>
                                 <span className={styles.productCategory}>{item.category}</span>
-                                <span className={styles.productPrice}>
-                                  {formatPrice(item.totalPrice)}
-                                </span>
-                                <span className={styles.subscriptionLabel}>구독가</span>
-                                <div className={styles.subscriptionPill}>
-                                  {`월 ${formatPrice(item.subscriptionPrice)}`}
-                                </div>
-                                <span className={styles.productAction}>자세히 보기 &gt;</span>
+                                {item.subscriptionPrice > 0 ? (
+                                  <>
+                                    <div className={styles.subscriptionPill}>
+                                      {`월 ${formatPrice(item.subscriptionPrice)}`}
+                                    </div>
+                                    <span className={styles.productPriceSub}>
+                                      {formatPrice(item.totalPrice)}
+                                    </span>
+                                  </>
+                                ) : (
+                                  <div className={styles.pricePill}>
+                                    {formatPrice(item.totalPrice)}
+                                  </div>
+                                )}
+                                {item.productUrl ? (
+                                  <a
+                                    href={item.productUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className={styles.productAction}
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    자세히보기 &gt;
+                                  </a>
+                                ) : (
+                                  <span className={styles.productAction}>자세히보기 &gt;</span>
+                                )}
                               </div>
                             ))}
                           </div>
@@ -525,7 +468,7 @@ function RecommendChatbot() {
                           <div className={styles.productGrid}>
                             {furnitureItems.map((item) => (
                               <div
-                                key={`${recommendPackage.title}-${item.name}`}
+                                key={`${recommendPackage.id}-${item.name}`}
                                 className={styles.productCard}
                               >
                                 <div className={styles.productImageWrap}>
@@ -538,7 +481,19 @@ function RecommendChatbot() {
                                 <strong className={styles.productName}>{item.name}</strong>
                                 <span className={styles.productCategory}>{item.category}</span>
                                 <span className={styles.productPrice}>{formatPrice(item.price)}</span>
-                                <span className={styles.productAction}>자세히 보기 &gt;</span>
+                                {item.productUrl ? (
+                                  <a
+                                    href={item.productUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className={styles.productAction}
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    자세히보기 &gt;
+                                  </a>
+                                ) : (
+                                  <span className={styles.productAction}>자세히보기 &gt;</span>
+                                )}
                               </div>
                             ))}
                           </div>
@@ -548,7 +503,7 @@ function RecommendChatbot() {
                       <div className={styles.productGrid}>
                         {visibleApplianceItems.map((item) => (
                           <div
-                            key={`${recommendPackage.title}-${item.name}`}
+                            key={`${recommendPackage.id}-${item.name}`}
                             className={styles.productCard}
                           >
                             <div className={styles.productImageWrap}>
@@ -556,34 +511,79 @@ function RecommendChatbot() {
                             </div>
                             <strong className={styles.productName}>{item.name}</strong>
                             <span className={styles.productCategory}>{item.category}</span>
-                            <span className={styles.productPrice}>{formatPrice(item.totalPrice)}</span>
-                            <span className={styles.subscriptionLabel}>구독가</span>
-                            <div className={styles.subscriptionPill}>
-                              {`월 ${formatPrice(item.subscriptionPrice)}`}
-                            </div>
-                            <span className={styles.productAction}>자세히 보기 &gt;</span>
+                            {item.subscriptionPrice > 0 ? (
+                              <>
+                                <div className={styles.subscriptionPill}>
+                                  {`월 ${formatPrice(item.subscriptionPrice)}`}
+                                </div>
+                                <span className={styles.productPriceSub}>
+                                  {formatPrice(item.totalPrice)}
+                                </span>
+                              </>
+                            ) : (
+                              <div className={styles.pricePill}>
+                                {formatPrice(item.totalPrice)}
+                              </div>
+                            )}
+                            {item.productUrl ? (
+                              <a
+                                href={item.productUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className={styles.productAction}
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                자세히보기 &gt;
+                              </a>
+                            ) : (
+                              <span className={styles.productAction}>자세히보기 &gt;</span>
+                            )}
                           </div>
                         ))}
                       </div>
                     )}
-                    {isExpanded ? (
-                      <p className={styles.recommendationMessage}>
-                        {recommendPackage.recommendationReason}
-                      </p>
+                    {isExpanded && recommendPackage.recommendationReason ? (
+                      <div style={{
+                        margin: "12px 0 8px",
+                        padding: "12px 14px",
+                        background: "#f0f7f0",
+                        borderRadius: 8,
+                        borderLeft: "3px solid #4caf50",
+                      }}>
+                        <div style={{ fontSize: 11, color: "#2e7d32", fontWeight: 700, marginBottom: 4 }}>
+                          💡 AI 추천 이유
+                        </div>
+                        <p style={{
+                          margin: 0, fontSize: 15.5, fontWeight: 500,
+                          color: "#2c3e2c", lineHeight: 1.65, wordBreak: "keep-all",
+                        }}>
+                          {recommendPackage.recommendationReason}
+                        </p>
+                      </div>
                     ) : null}
                     <div className={styles.packageActions}>
                       <button
                         type="button"
                         className={`${styles.packageActionBtn} ${styles.packageActionPrimary}`}
-                        onClick={() =>
+                        onClick={() => {
+                          console.log("[RecommendChatbot] appliances:", recommendPackage.appliances);
+                          console.log("[RecommendChatbot] furniture:", recommendPackage.furniture);
+                          const productIds = [
+                            ...recommendPackage.appliances.map((a) => a.product_id),
+                            ...recommendPackage.furniture.map((f) => f.product_id),
+                          ].filter((id) => id > 0);
+                          console.log("[RecommendChatbot] productIds to simulation:", productIds);
                           navigate("/simulation", {
                             state: {
                               packageTitle: recommendPackage.title,
                               packageTypeLabel: recommendPackage.typeLabel,
                               itemCount: getPackageItemCount(recommendPackage),
+                              productIds,
+                              interiorStyle: state?.interiorStyle ?? undefined,
+                              ownedAppliances: state?.ownedAppliances ?? undefined,
                             },
-                          })
-                        }
+                          });
+                        }}
                       >
                         <FiHome size={16} />
                         <span>배치보기</span>
@@ -599,11 +599,27 @@ function RecommendChatbot() {
             })}
           </div>
 
-          <div className={styles.moreWrap}>
-            <button type="button" className={styles.moreBtn}>
-              다른 추천 보기
-            </button>
-          </div>
+          {!hasNoMore && currentPage < maxPage && (
+            <div className={styles.moreWrap}>
+              <button
+                type="button"
+                className={styles.moreBtn}
+                onClick={handleLoadMore}
+                disabled={isLoadingMore || !convId}
+              >
+                {isLoadingMore
+                  ? "추천 불러오는 중..."
+                  : `다른 추천 보기 (${currentPage}/${maxPage})`}
+              </button>
+            </div>
+          )}
+          {hasNoMore && (
+            <div className={styles.moreWrap}>
+              <span style={{ color: "#999", fontSize: 14 }}>
+                더 이상 추천이 없습니다.
+              </span>
+            </div>
+          )}
         </div>
       </section>
 
@@ -645,6 +661,20 @@ function RecommendChatbot() {
                   </div>
                 </div>
               ))}
+              {isWaitingResponse && (
+                <div className={styles.chatRow}>
+                  <div className={styles.chatAvatar}>
+                    <img src={snowLogo} alt="챗봇 아이콘" className={styles.chatAvatarImage} />
+                  </div>
+                  <div className={styles.chatBubble}>
+                    <span className={styles.typingDots}>
+                      <span />
+                      <span />
+                      <span />
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
 
             <form className={styles.chatInputBar} onSubmit={handleChatSubmit}>
@@ -656,11 +686,21 @@ function RecommendChatbot() {
                   className={styles.chatInput}
                   value={chatInputValue}
                   onChange={(event) => setChatInputValue(event.target.value)}
-                  placeholder="추가로 궁금한 내용이나 조건을 입력해 주세요"
+                  placeholder={isWaitingResponse ? "답변을 기다리고 있어요..." : "추가로 궁금한 내용이나 조건을 입력해 주세요"}
                   aria-label="추가 질문 입력"
+                  disabled={isWaitingResponse}
                 />
-                <button type="submit" className={styles.chatSendBtn} aria-label="전송">
-                  <FiArrowUp size={18} />
+                <button
+                  type="submit"
+                  className={styles.chatSendBtn}
+                  aria-label="전송"
+                  disabled={isWaitingResponse}
+                >
+                  {isWaitingResponse ? (
+                    <span className={styles.chatSpinner} />
+                  ) : (
+                    <FiArrowUp size={18} />
+                  )}
                 </button>
               </div>
             </form>

@@ -95,6 +95,8 @@ function Signup() {
       gender,
       birthDate,
       phone: phone.replace(/\D/g, ""),
+      termsAccepted: agreeTerms,
+      privacyAccepted: agreePrivacy,
     });
     setLoading(false);
 
@@ -134,7 +136,7 @@ function Signup() {
               placeholder="이름을 입력하세요"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              autoComplete="name"
+              autoComplete="one-time-code"
             />
           </div>
 
@@ -149,7 +151,7 @@ function Signup() {
               placeholder="이메일 주소를 입력하세요"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              autoComplete="email"
+              autoComplete="one-time-code"
             />
           </div>
 
@@ -164,7 +166,7 @@ function Signup() {
               placeholder="비밀번호를 입력하세요"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              autoComplete="new-password"
+              autoComplete="one-time-code"
             />
             <span className={styles.hint}>영문, 숫자, 특수문자 포함 8자 이상</span>
           </div>
@@ -180,7 +182,7 @@ function Signup() {
               placeholder="비밀번호를 한 번 더 입력하세요"
               value={passwordConfirm}
               onChange={(e) => setPasswordConfirm(e.target.value)}
-              autoComplete="new-password"
+              autoComplete="one-time-code"
             />
           </div>
 
@@ -265,6 +267,7 @@ function Signup() {
               id="phone"
               type="tel"
               className={styles.input}
+              autoComplete="one-time-code"
               placeholder="'-' 없이 숫자만 입력하세요"
               value={phone}
               onChange={(e) => {
@@ -276,7 +279,7 @@ function Signup() {
                   else setPhone(`${v.slice(0, 3)}-${v.slice(3, 7)}-${v.slice(7)}`);
                 }
               }}
-              autoComplete="tel"
+              autoComplete="one-time-code"
             />
           </div>
 

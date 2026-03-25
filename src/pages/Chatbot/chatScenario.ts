@@ -14,6 +14,23 @@ import vacuumCleanerImage from "../../assets/images/lg_appliances/Vacuum_Cleaner
 import washingMachineImage from "../../assets/images/lg_appliances/Washing_Machine.avif";
 import waterPurifierImage from "../../assets/images/lg_appliances/Water_Purifier.avif";
 
+// ─── 인테리어 스타일 이미지 (각 15장) ───
+const miniImages = Object.values(
+  import.meta.glob("../../assets/images/interior/mini/*.jpeg", { eager: true, import: "default" }),
+) as string[];
+
+const woodImages = Object.values(
+  import.meta.glob("../../assets/images/interior/wood/*.jpeg", { eager: true, import: "default" }),
+) as string[];
+
+const colorfulImages = Object.values(
+  import.meta.glob("../../assets/images/interior/colorful/*.jpeg", { eager: true, import: "default" }),
+) as string[];
+
+function pickRandom(images: string[]): string {
+  return images[Math.floor(Math.random() * images.length)];
+}
+
 export type LifeTypeKey =
   | "single"
   | "couple"
@@ -53,12 +70,19 @@ export interface LifestyleCategory {
 export interface InteriorStyleOption {
   id: string;
   label: string;
+  imageSrc: string;
 }
 
 interface ApplianceOption {
   id: string;
   label: string;
   imageSrc: string;
+}
+
+export interface FurnitureOption {
+  id: string;
+  label: string;
+  icon: string;
 }
 
 interface QuestionStep {
@@ -213,21 +237,22 @@ export const CHATBOT_SCENARIO: ChatScenario = {
       { id: "other", label: "기타" },
     ],
     spaceSize: [
-      { id: "under-10", label: "10평 미만" },
-      { id: "10s", label: "10평형대" },
-      { id: "20s", label: "20평형대" },
-      { id: "30s", label: "30평형대" },
-      { id: "over-30", label: "30평 이상" },
+      { id: "8", label: "10평 미만" },
+      { id: "15", label: "10평형대" },
+      { id: "25", label: "20평형대" },
+      { id: "35", label: "30평형대" },
+      { id: "45", label: "30평 이상" },
     ],
     furnitureRecommendation: [
       { id: "yes", label: "네! 추천 해주세요" },
       { id: "no", label: "아직 필요 없어요" },
     ],
     budget: [
-      { id: "under-50", label: "50만 원 이하" },
-      { id: "50-to-150", label: "50 ~ 150만 원" },
-      { id: "150-to-300", label: "150 ~ 300만 원" },
-      { id: "over-300", label: "300만원 이상" },
+      { id: "under-150", label: "150만원 이하" },
+      { id: "under-300", label: "300만원 이하" },
+      { id: "under-450", label: "450만원 이하" },
+      { id: "under-600", label: "600만원 이하" },
+      { id: "over-600", label: "그 이상" },
     ],
   },
   lifestyleCategories: [
@@ -299,13 +324,24 @@ export const CHATBOT_SCENARIO: ChatScenario = {
     },
   ],
   interiorStyleOptions: [
-    { id: "modern-minimal", label: "모던/미니멀" },
-    { id: "natural-wood", label: "내추럴/우드" },
-    { id: "vintage-retro", label: "빈티지/레트로" },
-    { id: "nordic-scandi", label: "북유럽/스칸디" },
-    { id: "provence-romantic", label: "프로방스&로멘틱" },
-    { id: "classic-antique", label: "클래식&엔틱" },
+    { id: "modern-minimal", label: "모던/미니멀(화이트&블랙)", imageSrc: "" },
+    { id: "natural-wood", label: "내추럴/우드(따뜻하고 편안한)", imageSrc: "" },
+    { id: "colorful-point", label: "컬러풀/포인트(개성있는)", imageSrc: "" },
   ],
+  furnitureOptions: [
+    { id: "bed", label: "침대", icon: "🛏️" },
+    { id: "sofa", label: "소파", icon: "🛋️" },
+    { id: "desk", label: "책상", icon: "🖥️" },
+    { id: "chair", label: "의자", icon: "🪑" },
+    { id: "dining-table", label: "식탁·테이블", icon: "🍽️" },
+    { id: "bookshelf", label: "책장·수납장", icon: "📚" },
+    { id: "wardrobe", label: "옷장·행거", icon: "👔" },
+    { id: "vanity", label: "화장대·콘솔", icon: "💄" },
+    { id: "tv-stand", label: "TV거실장", icon: "📺" },
+    { id: "shelf", label: "선반", icon: "🗄️" },
+    { id: "trolley", label: "트롤리", icon: "🛒" },
+    { id: "mattress", label: "매트리스·토퍼", icon: "🛌" },
+  ] as FurnitureOption[],
   applianceOptions: [
     { id: "washer", label: "세탁기", imageSrc: washingMachineImage },
     { id: "air-conditioner", label: "에어컨", imageSrc: airConditionerImage },
@@ -351,6 +387,9 @@ export const CHATBOT_SCENARIO: ChatScenario = {
     interiorStylePrompt: `선호하는 인테리어 스타일을 선택해 주세요!
 아래 이미지를 참고하여 선택하시면 더 정확한 추천이 가능합니다.`,
     interiorStyleSelectedMessage: "고객님의 인테리어 정보를 기억하겠습니다!",
+    furnitureSelectionPrompt: `이제 필요하신 가구를 선택해 주세요!
+여러 개를 선택하실 수 있고, 없으시면 그대로 넘어가셔도 괜찮아요.`,
+    furnitureSelectionAcknowledged: "선택하신 가구 정보를 기억하겠습니다!",
     lifestylePrompt: `이제 생활 방식과 취향을 조금 더 세밀하게 반영해볼게요.
 잠시 후 열리는 선택 창에서 해당되는 항목을 자유롭게 골라주세요.
 선택하고 싶은 항목이 없다면 그대로 넘어가셔도 괜찮아요!`,
@@ -412,8 +451,17 @@ export function getFurnitureRecommendationQuickReplies(): QuickReplyOption[] {
   return CHATBOT_SCENARIO.quickReplies.furnitureRecommendation;
 }
 
+const STYLE_IMAGE_MAP: Record<string, string[]> = {
+  "modern-minimal": miniImages,
+  "natural-wood": woodImages,
+  "colorful-point": colorfulImages,
+};
+
 export function getInteriorStyleOptions(): InteriorStyleOption[] {
-  return CHATBOT_SCENARIO.interiorStyleOptions;
+  return CHATBOT_SCENARIO.interiorStyleOptions.map((opt) => ({
+    ...opt,
+    imageSrc: pickRandom(STYLE_IMAGE_MAP[opt.id] ?? miniImages),
+  }));
 }
 
 export function getSpaceSizeInvalidMessage(): string {
@@ -499,6 +547,18 @@ export function getFurnitureRecommendationSkippedMessage(): string {
 
 export function getInteriorStyleSelectedMessage(): string {
   return CHATBOT_SCENARIO.followUpMessages.interiorStyleSelectedMessage;
+}
+
+export function getFurnitureOptions(): FurnitureOption[] {
+  return CHATBOT_SCENARIO.furnitureOptions;
+}
+
+export function getFurnitureSelectionPromptMessage(): string {
+  return CHATBOT_SCENARIO.followUpMessages.furnitureSelectionPrompt;
+}
+
+export function getFurnitureSelectionAcknowledgedMessage(): string {
+  return CHATBOT_SCENARIO.followUpMessages.furnitureSelectionAcknowledged;
 }
 
 export function getLifestyleSelectionMessage(selectedStyles: string[]): string {

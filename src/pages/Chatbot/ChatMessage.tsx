@@ -23,16 +23,8 @@ interface ChatMessageProps {
   selectedInteriorStyle: string | null;
   interiorStyleSelectionEnabled: boolean;
   onInteriorStyleSelect: (label: string) => void;
+  onRefreshInteriorImages?: () => void;
 }
-
-const previewClassNames: Record<string, string> = {
-  "modern-minimal": styles.previewModernMinimal,
-  "natural-wood": styles.previewNaturalWood,
-  "vintage-retro": styles.previewVintageRetro,
-  "nordic-scandi": styles.previewNordicScandi,
-  "provence-romantic": styles.previewProvenceRomantic,
-  "classic-antique": styles.previewClassicAntique,
-};
 
 function isInteriorStyleSelectorMessage(
   message: Message,
@@ -45,14 +37,13 @@ function renderInteriorStyleSelector(
   selectedInteriorStyle: string | null,
   interiorStyleSelectionEnabled: boolean,
   onInteriorStyleSelect: (label: string) => void,
+  onRefreshInteriorImages?: () => void,
 ) {
   return (
     <div className={`${styles.bubble} ${styles.bubbleBot} ${styles.selectorBubble}`}>
       <div className={styles.selectorGrid}>
         {message.options.map((option) => {
           const isSelected = selectedInteriorStyle === option.label;
-          const previewClassName =
-            previewClassNames[option.id] ?? styles.previewModernMinimal;
 
           return (
             <button
@@ -64,20 +55,30 @@ function renderInteriorStyleSelector(
               onClick={() => onInteriorStyleSelect(option.label)}
               disabled={!interiorStyleSelectionEnabled}
             >
-              <div className={`${styles.stylePreview} ${previewClassName}`}>
-                <span className={styles.previewWall} />
-                <span className={styles.previewAccent} />
-                <span className={styles.previewFrame} />
-                <span className={styles.previewFloor} />
-                <span className={styles.previewSofa} />
-                <span className={styles.previewTable} />
-                <span className={styles.previewPlant} />
+              <div className={styles.stylePreview}>
+                <img
+                  src={option.imageSrc}
+                  alt={option.label}
+                  className={styles.stylePreviewImage}
+                />
               </div>
               <span className={styles.styleLabel}>{option.label}</span>
             </button>
           );
         })}
       </div>
+      {interiorStyleSelectionEnabled && onRefreshInteriorImages && (
+        <div className={styles.refreshRow}>
+          <button
+            type="button"
+            className={styles.refreshBtn}
+            onClick={onRefreshInteriorImages}
+          >
+            🔄 다른 사진 보기
+          </button>
+          <span className={styles.refreshHint}>다른 예시가 보고 싶다면 눌러주세요</span>
+        </div>
+      )}
     </div>
   );
 }
@@ -87,6 +88,7 @@ function ChatMessage({
   selectedInteriorStyle,
   interiorStyleSelectionEnabled,
   onInteriorStyleSelect,
+  onRefreshInteriorImages,
 }: ChatMessageProps) {
   const isBot = message.sender === "bot";
   let content: ReactNode;
@@ -97,6 +99,7 @@ function ChatMessage({
       selectedInteriorStyle,
       interiorStyleSelectionEnabled,
       onInteriorStyleSelect,
+      onRefreshInteriorImages,
     );
   } else {
     content = (

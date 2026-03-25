@@ -94,6 +94,22 @@
   box-shadow: 0 18px 30px rgba(99, 185, 98, 0.28);
 }
 
+.loadingSpinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2.5px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 .quickReplyList {
   width: min(100%, 780px);
   position: relative;
@@ -521,6 +537,11 @@
   border-right: 2px solid #ffffff;
   border-bottom: 2px solid #ffffff;
   transform: rotate(45deg) translate(-1px, -1px);
+}
+
+.applianceIcon {
+  font-size: 32px;
+  line-height: 1;
 }
 
 .applianceLabel {

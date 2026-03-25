@@ -3,6 +3,14 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { FiArrowUp, FiPlus } from "react-icons/fi";
 import ChatMessage from "./ChatMessage";
 import ChatSidebar from "./ChatSidebar";
+
+function genId(): string {
+  if (typeof crypto !== "undefined" && crypto.randomUUID) return crypto.randomUUID();
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    return (c === "x" ? r : (r & 0x3) | 0x8).toString(16);
+  });
+}
 import { useChatSession } from "@/hooks/useChatSession";
 import { fetchRecommendations, onStompDisconnect } from "@/services/chatService";
 import {
@@ -238,7 +246,7 @@ function Chatbot() {
     setMessages((prev) => [
       ...prev,
       {
-        id: crypto.randomUUID(),
+        id: genId(),
         sender: "user",
         text: trimmed,
       },
@@ -362,7 +370,7 @@ function Chatbot() {
             setMessages((prev) => [
               ...prev,
               {
-                id: crypto.randomUUID(),
+                id: genId(),
                 sender: "bot",
                 type: "interior-style-selector",
                 options: nextItem.options,
@@ -371,7 +379,7 @@ function Chatbot() {
             continue;
           }
 
-          const nextMessageId = crypto.randomUUID();
+          const nextMessageId = genId();
           setMessages((prev) => [
             ...prev,
             {

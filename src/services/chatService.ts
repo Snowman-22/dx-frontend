@@ -46,11 +46,6 @@ export function toStarterPackageType(lifeType?: string): StarterPackageType {
 
 // ─── REST API (인증 필요) ───
 
-function authHeaders() {
-  const token = getAccessToken();
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
-
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE || "/api",
   headers: { "Content-Type": "application/json" },

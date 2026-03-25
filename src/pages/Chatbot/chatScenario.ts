@@ -115,6 +115,7 @@ interface ChatScenario {
   lifestyleCategories: LifestyleCategory[];
   interiorStyleOptions: InteriorStyleOption[];
   applianceOptions: ApplianceOption[];
+  furnitureOptions: FurnitureOption[];
   followUpMessages: {
     roomTypeSelected: ReplyTemplate;
     ownedApplianceCheck: string;
@@ -126,6 +127,8 @@ interface ChatScenario {
     furnitureRecommendationSkippedMessage: string;
     interiorStylePrompt: string;
     interiorStyleSelectedMessage: string;
+    furnitureSelectionPrompt: string;
+    furnitureSelectionAcknowledged: string;
     lifestylePrompt: string;
     lifestyleSelected: ReplyTemplate;
     budgetInvalidMessage: string;

@@ -5,7 +5,6 @@ import chatbotIcon from "../../assets/images/chatbot_icon.png";
 import snowLogo from "../../assets/images/snow_logo.png";
 import {
   connectStomp,
-  disconnectStomp,
   subscribeTopic,
   sendRecommendRag,
 } from "@/services/chatService";

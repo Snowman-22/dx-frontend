@@ -343,7 +343,6 @@ export const CHATBOT_SCENARIO: ChatScenario = {
     { id: "tv-stand", label: "TV거실장", icon: "📺" },
     { id: "shelf", label: "선반", icon: "🗄️" },
     { id: "trolley", label: "트롤리", icon: "🛒" },
-    { id: "mattress", label: "매트리스·토퍼", icon: "🛌" },
   ] as FurnitureOption[],
   applianceOptions: [
     { id: "washer", label: "세탁기", imageSrc: washingMachineImage },

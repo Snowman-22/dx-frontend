@@ -41,7 +41,7 @@ const REFRESH_KEY = "lg_auth_refresh";
 // ─── API Client ───
 
 const authApi = axios.create({
-  baseURL: "/api/auth",
+  baseURL: `${import.meta.env.VITE_API_BASE || "/api"}/auth`,
   headers: { "Content-Type": "application/json" },
   timeout: 10_000,
 });

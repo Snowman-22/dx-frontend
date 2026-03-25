@@ -35,7 +35,6 @@ import {
   getSpaceSizeSelectionMessages,
   getSpaceSizeQuickReplies,
   isValidRoomTypeInput,
-  type FurnitureOption,
   type InteriorStyleOption,
   type LifestyleCategory,
   type LifeTypeKey,
@@ -109,7 +108,7 @@ function Chatbot() {
   const existingSession = locationState?.chatSession ?? null;
 
   // ─── 서버 세션 (STOMP) ───
-  const { send: stompSend, convId, isReady: isSessionReady } = useChatSession(lifeType, existingSession);
+  const { send: stompSend, convId, isReady: _isSessionReady } = useChatSession(lifeType, existingSession);
 
   // STOMP 연결 끊김 감지 → 메인으로 이동
   useEffect(() => {

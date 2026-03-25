@@ -8,9 +8,7 @@ import {
   FiLayers,
   FiLoader,
   FiPlus,
-  FiRefreshCw,
   FiSave,
-  FiShoppingCart,
 } from "react-icons/fi";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useFloorPlans, useFloorPlan, useCreateSession } from "@/hooks/useSimulation";
@@ -180,7 +178,8 @@ function Simulation() {
     [floorPlanDetail],
   );
 
-  const runAutoPlace = useCallback(
+  // @ts-expect-error: will be used when product selection is connected
+  const _runAutoPlace = useCallback(
     async (sid: number) => {
       setIsAutoPlacing(true);
       try {
@@ -268,7 +267,8 @@ function Simulation() {
     [sessionId, layouts, currentLayoutIdx, placementsMap, productIds, applyLayoutByIndex],
   );
 
-  const applyLayout = useCallback(
+  // @ts-expect-error: will be used when layout selection is connected
+  const _applyLayout = useCallback(
     (layout: LayoutOption) => {
       const grouped: Record<number, Placement[]> = {};
       for (let i = 0; i < layout.placements.length; i++) {
@@ -289,7 +289,7 @@ function Simulation() {
       }
       setPlacementsMap(grouped);
       setAutoPlaceWarnings(layout.warnings);
-      setIsLayoutModalOpen(false);
+      setIsModalOpen(false);
     },
     [sessionId],
   );
@@ -350,44 +350,6 @@ function Simulation() {
       },
     );
   }, [selectedPlanId, floorPlans, createSession, runGenerateLayoutsForSession]);
-
-  const handleRandomSimulation = useCallback(async () => {
-    const planId = selectedPlanId ?? floorPlans[0]?.id;
-    if (!planId) return;
-    setSelectedPlanId(planId);
-    setIsAutoPlacing(true);
-    setLayouts([]);
-    setAiRankings([]);
-    setCurrentLayoutIdx(-1);
-    try {
-      // 1. 세션 생성
-      const { data: session } = await simulationApi.post<{ id: number }>("/sessions", {
-        floor_plan_id: planId,
-        session_name: `random-${planId}`,
-      });
-      setSessionId(session.id);
-      setIsModalOpen(false);
-
-      // 2. 도면 크기에 맞는 랜덤 제품 가져오기
-      const { data: testSet } = await simulationApi.get<{ product_ids: number[] }>(
-        `/floor-plans/${planId}/test-set`,
-      );
-
-      // 3. 자동 배치
-      const { data: result } = await simulationApi.post<AutoPlaceResponse>(
-        `/sessions/${session.id}/auto-place`,
-        { product_ids: testSet.product_ids },
-      );
-      const grouped: Record<number, Placement[]> = {};
-      for (const pl of result.placements) {
-        (grouped[pl.room_id] ??= []).push(pl);
-      }
-      setPlacementsMap(grouped);
-      setAutoPlaceWarnings(result.warnings);
-    } finally {
-      setIsAutoPlacing(false);
-    }
-  }, [selectedPlanId, floorPlans]);
 
   const handleGenerate3d = useCallback(async () => {
     if (!sessionId) return;

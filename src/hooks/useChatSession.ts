@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   connectStomp,
   disconnectStomp,
@@ -32,8 +32,6 @@ export function useChatSession(
   const [isReady, setIsReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [session, setSession] = useState<ChatSession | null>(existingSession ?? null);
-  const abortRef = useRef(false);
-
   const initialize = useCallback(async (signal: { aborted: boolean }) => {
     const token = getAccessToken();
     if (!token) {

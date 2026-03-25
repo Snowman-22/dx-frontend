@@ -279,7 +279,6 @@ function Signup() {
                   else setPhone(`${v.slice(0, 3)}-${v.slice(3, 7)}-${v.slice(7)}`);
                 }
               }}
-              autoComplete="one-time-code"
             />
           </div>
 

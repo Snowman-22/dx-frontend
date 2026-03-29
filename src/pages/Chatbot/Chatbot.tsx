@@ -12,7 +12,7 @@ function genId(): string {
   });
 }
 import { useChatSession } from "@/hooks/useChatSession";
-import { fetchRecommendations, onStompDisconnect } from "@/services/chatService";
+import { fetchRecommendations, subscribeTopic, onStompDisconnect } from "@/services/chatService";
 import {
   buildBotReply,
   getApplianceOptions,
@@ -106,6 +106,10 @@ const STAGE_STEP_MAP: Record<ChatStage, string> = {
 };
 
 function Chatbot() {
+  useEffect(() => {
+    document.title = "Home Canvas";
+    return () => { document.title = "LGE.COM | LG전자"; };
+  }, []);
   const location = useLocation();
   const navigate = useNavigate();
   const locationState = location.state as {
@@ -116,7 +120,7 @@ function Chatbot() {
   const existingSession = locationState?.chatSession ?? null;
 
   // ─── 서버 세션 (STOMP) ───
-  const { send: stompSend, convId, isReady: _isSessionReady } = useChatSession(lifeType, existingSession);
+  const { send: stompSend, convId, isReady } = useChatSession(lifeType, existingSession);
 
   // STOMP 연결 끊김 감지 → 메인으로 이동
   useEffect(() => {
@@ -124,14 +128,32 @@ function Chatbot() {
     onStompDisconnect(() => {
       if (disconnected) return;
       disconnected = true;
-      alert("인터넷 연결이 끊겼습니다. 메인 화면으로 이동합니다.");
-      navigate("/");
+      alert("인터넷 연결이 끊겼습니다. 유형 선택 화면으로 이동합니다.");
+      navigate("/recommend");
     });
     return () => {
       disconnected = true;
       onStompDisconnect(null);
     };
   }, [navigate]);
+
+  // STOMP 구독 — 추천 리스트 수신 (recommendationPlus 포함)
+  useEffect(() => {
+    if (!isReady || !convId) return;
+    const unsub = subscribeTopic(convId, (body) => {
+      const dataJson = body.data_json ?? body.dataJson ?? body;
+      if (dataJson && typeof dataJson === "object") {
+        const recList = (dataJson as Record<string, unknown>).recommendation_list ??
+                        (dataJson as Record<string, unknown>).recommendationList;
+        if (Array.isArray(recList) && recList.length > 0) {
+          console.log("[STOMP] Received recommendation_list:", recList.length, "items");
+          setStompRecommendations(recList as Record<string, unknown>[]);
+        }
+      }
+    });
+    return () => { unsub?.(); };
+  }, [isReady, convId]);
+
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -152,6 +174,7 @@ function Chatbot() {
     null,
   );
   const [selectedLifestyles, setSelectedLifestyles] = useState<string[]>([]);
+  const [selectedBudgetValue, setSelectedBudgetValue] = useState<number | null>(null);
   const [confirmedOwnedLabels, setConfirmedOwnedLabels] = useState<string[]>([]);
   const [furnitureModalOpen, setFurnitureModalOpen] = useState(false);
   const [shouldAutoOpenFurnitureModal, setShouldAutoOpenFurnitureModal] = useState(false);
@@ -161,6 +184,7 @@ function Chatbot() {
   const [isBotTyping, setIsBotTyping] = useState(false);
   const [showRecommendCta, setShowRecommendCta] = useState(false);
   const [isLoadingRecommend, setIsLoadingRecommend] = useState(false);
+  const [stompRecommendations, setStompRecommendations] = useState<Record<string, unknown>[] | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const botQueueRef = useRef<BotQueueItem[]>([]);
@@ -528,7 +552,9 @@ function Chatbot() {
 
   const completeBudgetStep = (answer: string) => {
     appendUserMessage(answer);
-    stompSend(STAGE_STEP_MAP.budget, BUDGET_VALUE_MAP[answer] ?? answer, "총 예산은 어느 정도 생각하고 계세요?");
+    const budgetVal = BUDGET_VALUE_MAP[answer] ?? answer;
+    setSelectedBudgetValue(Number(budgetVal) || null);
+    stompSend(STAGE_STEP_MAP.budget, budgetVal, "총 예산은 어느 정도 생각하고 계세요?");
     enqueueBotMessages([getBudgetCompletedMessage()]);
     budgetInvalidNoticeShownRef.current = false;
     setReplyButtonsReady(false);
@@ -714,10 +740,10 @@ function Chatbot() {
 
   const SPACE_SIZE_VALUE_MAP: Record<string, string> = {
     "10평 미만": "8",
-    "10평형대": "15",
-    "20평형대": "25",
-    "30평형대": "35",
-    "30평 이상": "45",
+    "10평대": "15",
+    "20평대": "25",
+    "30평대": "35",
+    "30평대 이상": "45",
   };
 
   const handleSpaceSizeSelect = (label: string, isDirectInput = false) => {
@@ -847,7 +873,7 @@ function Chatbot() {
         open={sidebarOpen}
         onToggle={() => setSidebarOpen((prev) => !prev)}
         onNewChat={handleNewChat}
-        onExit={() => navigate("/")}
+        onExit={() => navigate("/recommend")}
       />
 
       <div className={styles.chatArea}>
@@ -856,15 +882,17 @@ function Chatbot() {
             <div className={styles.modalCard}>
               <div className={styles.modalHeader}>
                 <div>
-                  <p className={styles.modalEyebrow}>STEP 2</p>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <p className={styles.modalEyebrow} style={{ margin: 0 }}>STEP 2</p>
+                    <span style={{ fontSize: 12, color: "#888", fontWeight: 500 }}>
+                      {activeApplianceTab === "owned" ? "1" : "2"} / 2 페이지
+                    </span>
+                  </div>
                   <h2 className={styles.modalTitle}>{applianceTabPrompt}</h2>
                   <p className={styles.modalHelper}>
                     {activeApplianceTab === "owned"
                       ? "현재 보유 중인 가전을 선택한 뒤 다음 페이지로 넘어가세요."
                       : "추가로 필요한 가전을 선택한 뒤 선택 완료를 눌러주세요."}
-                  </p>
-                  <p className={styles.modalPageIndicator}>
-                    {activeApplianceTab === "owned" ? "1" : "2"} / 2 페이지
                   </p>
                 </div>
               </div>
@@ -892,9 +920,6 @@ function Chatbot() {
                       aria-disabled={disabled}
                       onClick={() => toggleApplianceSelection(option.id)}
                     >
-                      <span className={styles.applianceSelectionBadge} aria-hidden="true">
-                        {selected ? "선택됨" : ""}
-                      </span>
                       <div className={styles.applianceImageWrap}>
                         <img
                           src={option.imageSrc}
@@ -930,9 +955,16 @@ function Chatbot() {
                       type="button"
                       className={styles.modalActionBtn}
                       onClick={handleApplianceComplete}
+                      disabled={selectedNeededAppliances.length === 0}
+                      style={selectedNeededAppliances.length === 0 ? { opacity: 0.4, cursor: "not-allowed" } : {}}
                     >
                       선택 완료
                     </button>
+                    {selectedNeededAppliances.length === 0 && (
+                      <p style={{ color: "#e53935", fontSize: 13, textAlign: "center", marginTop: 8 }}>
+                        필요한 가전을 하나 이상 선택해주세요.
+                      </p>
+                    )}
                   </div>
                 )}
               </div>
@@ -950,7 +982,7 @@ function Chatbot() {
                     필요하신 가구를 선택해 주세요
                   </h2>
                   <p className={styles.modalHelper}>
-                    여러 개를 선택하실 수 있고, 필요 없으시면 바로 선택 완료를 눌러주세요.
+                    중복 선택이 가능하며, 필요한 가구가 없다면 바로 완료를 눌러주세요.
                   </p>
                 </div>
               </div>
@@ -1096,18 +1128,40 @@ function Chatbot() {
                   try {
                     const result = await fetchRecommendations(convId, 1);
                     if (result.recommendations.length === 0) {
-                      enqueueBotMessages(["추천 결과가 아직 준비되지 않았어요. 잠시 후 다시 시도해 주세요."]);
+                      enqueueBotMessages(["추천 결과를 가져오지 못했어요. 처음부터 다시 시작할게요."]);
                       setIsLoadingRecommend(false);
+                      setTimeout(() => navigate("/recommend"), 2000);
                       return;
                     }
                     console.log("[Chatbot] confirmedOwnedLabels:", confirmedOwnedLabels);
+                    console.log("[Chatbot] stompRecommendations:", stompRecommendations?.length ?? 0);
+                    // STOMP 데이터에서 recommendationPlus를 REST 결과에 주입
+                    if (stompRecommendations && Array.isArray(stompRecommendations)) {
+                      for (const rec of result.recommendations) {
+                        const match = stompRecommendations.find(
+                          (sr) => sr.package_name === rec.package_name
+                        );
+                        if (match && (match as unknown as Record<string, unknown>).recommendationPlus) {
+                          (rec as unknown as Record<string, unknown>).recommendationPlus =
+                            (match as unknown as Record<string, unknown>).recommendationPlus;
+                        }
+                      }
+                    }
                     navigate("/recommendchatbot", {
-                      state: { convId, lifeType, interiorStyle: selectedInteriorStyle, ownedAppliances: confirmedOwnedLabels, recommendations: result },
+                      state: {
+                        convId, lifeType, interiorStyle: selectedInteriorStyle,
+                        ownedAppliances: confirmedOwnedLabels,
+                        lifestyle: selectedLifestyles,
+                        budget: selectedBudgetValue,
+                        recommendations: result,
+                        stompRecommendations: stompRecommendations,
+                      },
                     });
                   } catch (err) {
                     console.error("추천 조회 실패:", err);
-                    enqueueBotMessages(["추천 목록을 불러오는데 실패했어요. 다시 시도해 주세요."]);
+                    enqueueBotMessages(["추천 목록을 불러오는데 실패했어요. 처음부터 다시 시작할게요."]);
                     setIsLoadingRecommend(false);
+                    setTimeout(() => navigate("/recommend"), 2000);
                   }
                 }}
               >

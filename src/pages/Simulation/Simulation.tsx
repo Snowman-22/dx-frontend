@@ -1,23 +1,20 @@
-import { useState, useCallback, useRef, type FormEvent } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import {
   FiArrowLeft,
-  FiArrowUp,
   FiBox,
   FiCheck,
-  FiChevronDown,
   FiLayers,
   FiLoader,
-  FiPlus,
   FiSave,
 } from "react-icons/fi";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import { useFloorPlans, useFloorPlan, useCreateSession } from "@/hooks/useSimulation";
 import simulationApi from "@/services/simulationApi";
-import type { FloorPlan, FloorPlanRoom, Placement, AutoPlaceResponse, GenerateLayoutsResponse, LayoutOption, AiRanking } from "@/types/simulation";
+import type { FloorPlan, Placement, AutoPlaceResponse, GenerateLayoutsResponse, LayoutOption, AiRanking } from "@/types/simulation";
 import FloorPlanCanvas from "@/components/FloorPlanCanvas/FloorPlanCanvas";
 import type { FloorPlanCanvasHandle } from "@/components/FloorPlanCanvas/FloorPlanCanvas";
 import { validatePlacement } from "@/utils/placementValidator";
-import chatbotIcon from "../../assets/images/chatbot_icon.png";
 import snowLogo from "../../assets/images/snow_logo.png";
 import styles from "./Simulation.module.css";
 
@@ -32,13 +29,25 @@ const floorPlanImages = Object.fromEntries(
   })
 );
 
+type ProductDetail = {
+  product_id: number;
+  name: string;
+  category: string;
+  totalPrice: number;
+  subscriptionPrice: number;
+  image?: string;
+};
+
 type SimulationState = {
   packageTitle?: string;
   packageTypeLabel?: string;
   itemCount?: number;
   productIds?: number[];
+  productDetails?: ProductDetail[];
   interiorStyle?: string;
   ownedAppliances?: string[];
+  lifestyle?: string[];
+  budget?: number;
 };
 
 type SimulationTab = "floor2d" | "image3d" | "cart";
@@ -73,17 +82,20 @@ function formatCaption(plan: FloorPlan): string {
 }
 
 function Simulation() {
+  useEffect(() => {
+    document.title = "Home Canvas";
+    return () => { document.title = "LGE.COM | LG전자"; };
+  }, []);
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
   const state = (location.state as SimulationState | null) ?? null;
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [planCategory, setPlanCategory] = useState<string>("원룸");
-  const [isChatOpen, setIsChatOpen] = useState(false);
-  const [chatInputValue, setChatInputValue] = useState("");
   const [activeTab, setActiveTab] = useState<SimulationTab>("floor2d");
   const [selectedPlanId, setSelectedPlanId] = useState<number | null>(null);
   const [sessionId, setSessionId] = useState<number | null>(null);
-  const [selectedRoomId, setSelectedRoomId] = useState<number | null>(null);
+  // const [selectedRoomId, setSelectedRoomId] = useState<number | null>(null);
   const [placementsMap, setPlacementsMap] = useState<Record<number, Placement[]>>({});
   const [autoPlaceWarnings, setAutoPlaceWarnings] = useState<string[]>([]);
   const [isAutoPlacing, setIsAutoPlacing] = useState(false);
@@ -92,9 +104,14 @@ function Simulation() {
   const [currentLayoutIdx, setCurrentLayoutIdx] = useState(-1); // -1 = 초기 auto-place
   const [image3dUrl, setImage3dUrl] = useState<string | null>(null);
   const [isGenerating3d, setIsGenerating3d] = useState(false);
+  const [gen3dCount, setGen3dCount] = useState(0);
+  const MAX_3D_GENERATIONS = 2;
   const [isGeneratingLayouts, setIsGeneratingLayouts] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  const [isPaymentOpen, setIsPaymentOpen] = useState(false);
+  const [paymentStep, setPaymentStep] = useState<"confirm" | "processing" | "done">("confirm");
+  const [paymentType, setPaymentType] = useState<"lump" | "subscription">("lump");
   const canvasHandle = useRef<FloorPlanCanvasHandle>(null);
 
   const productIds = state?.productIds ?? TEST_PRODUCT_IDS;
@@ -105,15 +122,69 @@ function Simulation() {
 
   const selectedPlan = floorPlans.find((p) => p.id === selectedPlanId) ?? floorPlans[0] ?? null;
 
-  const handleRoomClick = useCallback((room: FloorPlanRoom) => {
-    setSelectedRoomId(room.id);
-  }, []);
+  // 장바구니 + 결제 모달에서 공용으로 사용
+  const ownedLabelsGlobal = state?.ownedAppliances ?? [];
+  const labelToCatGlobal: Record<string, string> = {
+    "건조기": "의류건조기", "스타일러": "의류관리기",
+    "인덕션": "전기레인지", "전자레인지": "광파오븐/전자레인지", "오븐": "광파오븐/전자레인지",
+  };
+  const ownedCatsGlobal = new Set([...ownedLabelsGlobal, ...ownedLabelsGlobal.map((l) => labelToCatGlobal[l] ?? l)]);
+  const allPlacementsFlat = Object.values(placementsMap).flat();
+  const detailsMap = new Map((state?.productDetails ?? []).map((d) => [d.product_id, d]));
+  const allPlacedProducts = allPlacementsFlat
+    .map((pl) => {
+      const product = pl.product;
+      if (!product) {
+        // product가 null이면 detailsMap에서 복구 시도
+        const detail = detailsMap.get(pl.product_id);
+        if (detail) {
+          return {
+            product_id: pl.product_id,
+            name: detail.name ?? `제품 ${pl.product_id}`,
+            category: detail.category ?? "",
+            price: detail.totalPrice ?? 0,
+            list_price: detail.totalPrice ?? 0,
+            image_url: detail.image ?? null,
+            width_mm: null as number | null, height_mm: null as number | null, depth_mm: null as number | null,
+            isOwned: ownedCatsGlobal.has(detail.category ?? "") || ownedCatsGlobal.has(detail.name ?? ""),
+            subscriptionPrice: detail.subscriptionPrice ?? 0,
+            displayTotalPrice: detail.totalPrice ?? 0,
+          };
+        }
+        return null;
+      }
+      const detail = detailsMap.get(product.product_id);
+      return {
+        ...product,
+        isOwned: ownedCatsGlobal.has(product.category) || ownedCatsGlobal.has(product.name),
+        subscriptionPrice: detail?.subscriptionPrice ?? 0,
+        displayTotalPrice: detail?.totalPrice ?? product.list_price ?? product.price ?? 0,
+      };
+    })
+    .filter((p): p is NonNullable<typeof p> => p != null);
+  const placedProductsForSale = allPlacedProducts.filter((p) => !p.isOwned);
+  const subscriptionProducts = placedProductsForSale.filter((p) => p.subscriptionPrice > 0);
+  const nonSubscriptionProducts = placedProductsForSale.filter((p) => !p.subscriptionPrice);
+  const totalListPrice = placedProductsForSale.reduce((sum, p) => sum + (p.list_price ?? p.displayTotalPrice ?? 0), 0);
+  const totalPrice = placedProductsForSale.reduce((sum, p) => sum + (p.price ?? 0), 0);
+  const totalSubscription = subscriptionProducts.reduce((sum, p) => sum + (p.subscriptionPrice ?? 0), 0);
+  const nonSubTotal = nonSubscriptionProducts.reduce((sum, p) => sum + (p.price ?? 0), 0);
+
+  // 방 선택 기능 비활성화됨
+
+  const dragStartPosRef = useRef<{ roomId: number; index: number; x_mm: number; y_mm: number } | null>(null);
 
   const handlePlacementMove = useCallback(
     (roomId: number, index: number, xMm: number, yMm: number) => {
       setPlacementsMap((prev) => {
         const roomPls = prev[roomId];
         if (!roomPls || !roomPls[index]) return prev;
+
+        // 드래그 시작 위치 저장 (최초 1회만)
+        if (!dragStartPosRef.current) {
+          dragStartPosRef.current = { roomId, index, x_mm: roomPls[index].x_mm, y_mm: roomPls[index].y_mm };
+        }
+
         const updated = [...roomPls];
         updated[index] = { ...updated[index], x_mm: xMm, y_mm: yMm };
         return { ...prev, [roomId]: updated };
@@ -133,7 +204,7 @@ function Simulation() {
       const pl = roomPls[index];
       const others = roomPls.filter((_, i) => i !== index);
 
-      const violations = validatePlacement(pl, room, others);
+      const violations = validatePlacement(pl, room, others, floorPlanDetail?.rooms);
 
       setPlacementsMap((prev) => {
         const updated = [...(prev[roomId] ?? [])];
@@ -146,8 +217,33 @@ function Simulation() {
         }
         return { ...prev, [roomId]: updated };
       });
+
+      dragStartPosRef.current = null;
     },
     [floorPlanDetail, placementsMap],
+  );
+
+  const handlePlacementRoomChange = useCallback(
+    (fromRoomId: number, placementIndex: number, toRoomId: number, xMm: number, yMm: number): number => {
+      let newIndex = 0;
+      setPlacementsMap((prev) => {
+        const fromPls = [...(prev[fromRoomId] ?? [])];
+        const pl = fromPls[placementIndex];
+        if (!pl) return prev;
+
+        // 원래 방에서 제거
+        fromPls.splice(placementIndex, 1);
+
+        // 새 방에 추가
+        const toPls = [...(prev[toRoomId] ?? [])];
+        toPls.push({ ...pl, room_id: toRoomId, x_mm: xMm, y_mm: yMm });
+        newIndex = toPls.length - 1;
+
+        return { ...prev, [fromRoomId]: fromPls, [toRoomId]: toPls };
+      });
+      return newIndex;
+    },
+    [],
   );
 
   const handlePlacementRotate = useCallback(
@@ -165,7 +261,7 @@ function Simulation() {
         const rotated = { ...pl, rotation: newRotation };
 
         const others = updated.filter((_, i) => i !== index);
-        const violations = validatePlacement(rotated, room, others);
+        const violations = validatePlacement(rotated, room, others, floorPlanDetail?.rooms);
 
         updated[index] = {
           ...rotated,
@@ -340,7 +436,7 @@ function Simulation() {
     if (!planId) return;
     setSelectedPlanId(planId);
     createSession.mutate(
-      { floor_plan_id: planId, session_name: `session-${planId}` },
+      { floor_plan_id: planId, session_name: `session-${planId}`, user_id: user?.id ?? 1 },
       {
         onSuccess: (session) => {
           setSessionId(session.id);
@@ -353,17 +449,26 @@ function Simulation() {
 
   const handleGenerate3d = useCallback(async () => {
     if (!sessionId) return;
+    if (gen3dCount >= MAX_3D_GENERATIONS) {
+      alert(`3D 변환은 최대 ${MAX_3D_GENERATIONS}회까지 가능합니다.`);
+      return;
+    }
     setIsGenerating3d(true);
     setActiveTab("image3d");
     try {
-      // 2D Canvas 이미지를 캡처하여 참조 이미지로 전송
       const canvasImage = canvasHandle.current?.toDataURL() ?? null;
       const { data } = await simulationApi.post<{ image_url: string }>(
         `/sessions/${sessionId}/generate-3d`,
-        { canvas_image: canvasImage, interior_style: state?.interiorStyle ?? null },
+        {
+          canvas_image: canvasImage,
+          interior_style: state?.interiorStyle ?? null,
+          lifestyle: state?.lifestyle ?? null,
+          budget: state?.budget ?? null,
+        },
         { timeout: 120_000 },
       );
       setImage3dUrl(data.image_url);
+      setGen3dCount((prev) => prev + 1);
     } catch (err) {
       console.error("3D generation failed:", err);
       setImage3dUrl(null);
@@ -371,7 +476,7 @@ function Simulation() {
     } finally {
       setIsGenerating3d(false);
     }
-  }, [sessionId]);
+  }, [sessionId, gen3dCount]);
 
   const handleSaveSnapshot = useCallback(async (type: "2d" | "3d" | "all") => {
     if (!sessionId || isSaving) return;
@@ -422,11 +527,6 @@ function Simulation() {
     }
   }, [sessionId, isSaving, image3dUrl]);
 
-  const handleChatSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setChatInputValue((prev) => prev.trim());
-  };
-
   const tabMeta = TAB_COPY[activeTab];
 
   return (
@@ -439,7 +539,7 @@ function Simulation() {
             <FiArrowLeft size={18} />
             <span>이전으로</span>
           </button>
-          <button type="button" className={styles.backButton} onClick={() => navigate("/")}>
+          <button type="button" className={styles.backButton} onClick={() => { sessionStorage.clear(); navigate("/"); }}>
             <span>메인으로</span>
           </button>
         </div>
@@ -451,7 +551,7 @@ function Simulation() {
           </div>
           <h1 className={styles.title}>추천 패키지 배치보기</h1>
           <p className={styles.subtitle}>
-            도면도를 선택하면 AI가 최적의 가전·가구 배치를 추천합니다.
+            도면을 선택하면 AI가 최적의 가전·가구 배치를 추천합니다.
           </p>
         </div>
       </header>
@@ -467,11 +567,11 @@ function Simulation() {
           <div className={styles.selectedPlanCard}>
             <div className={styles.selectedPlanHeader}>
               <FiLayers size={16} />
-              <span>현재 도면도</span>
+              <span>현재 도면</span>
             </div>
             <strong className={styles.selectedPlanName}>{selectedPlan?.name ?? "미선택"}</strong>
             <p className={styles.selectedPlanCaption}>
-              {selectedPlan ? formatCaption(selectedPlan) : "도면도를 선택해 주세요"}
+              {selectedPlan ? formatCaption(selectedPlan) : "도면을 선택해 주세요"}
             </p>
           </div>
 
@@ -480,7 +580,7 @@ function Simulation() {
             className={styles.secondaryButton}
             onClick={() => setIsModalOpen(true)}
           >
-            도면도 다시 선택
+            도면 다시 선택
           </button>
 
           {(() => {
@@ -552,15 +652,15 @@ function Simulation() {
                 </div>
                 {owned.length > 0 && (
                   <>
-                    <div style={{ fontSize: 11, color: "#7a8a7c", marginBottom: 4 }}>보유 가전</div>
+                    <div style={{ fontSize: 11, color: "#5a7a7a", marginBottom: 4 }}>보유 가전</div>
                     {owned.map((pl, i) => (
                       <div key={`owned-${i}`} style={{
                         display: "flex", alignItems: "center", gap: 6,
                         padding: "5px 8px", marginBottom: 3, borderRadius: 6,
-                        background: "#e8f5e9", fontSize: 12,
+                        background: "rgba(60, 93, 93, 0.08)", fontSize: 12,
                       }}>
-                        <span style={{ background: "#66bb6a", color: "#fff", padding: "1px 6px", borderRadius: 4, fontSize: 10, fontWeight: 600 }}>보유</span>
-                        <span style={{ color: "#2e7d32", fontWeight: 500 }}>{pl.product?.name ?? pl.product?.category ?? `제품 ${pl.product_id}`}</span>
+                        <span style={{ background: "#3C5D5D", color: "#fff", padding: "1px 6px", borderRadius: 4, fontSize: 10, fontWeight: 600 }}>보유</span>
+                        <span style={{ color: "#3C5D5D", fontWeight: 500 }}>{pl.product?.name ?? pl.product?.category ?? `제품 ${pl.product_id}`}</span>
                       </div>
                     ))}
                   </>
@@ -634,25 +734,11 @@ function Simulation() {
                 type="button"
                 className={styles.headerActionBtn}
                 onClick={handleGenerate3d}
-                disabled={!sessionId || isGenerating3d || Object.keys(placementsMap).length === 0}
+                disabled={!sessionId || isGenerating3d || Object.keys(placementsMap).length === 0 || gen3dCount >= MAX_3D_GENERATIONS}
               >
                 <FiBox size={16} />
-                <span>{isGenerating3d ? "생성 중..." : "3D 변환하기"}</span>
+                <span>{isGenerating3d ? "생성 중..." : gen3dCount >= MAX_3D_GENERATIONS ? `3D 변환 완료 (${MAX_3D_GENERATIONS}/${MAX_3D_GENERATIONS})` : `3D 변환하기 (${gen3dCount}/${MAX_3D_GENERATIONS})`}</span>
               </button>
-              <button
-                type="button"
-                className={`${styles.headerActionBtn} ${styles.headerActionPrimary}`}
-                onClick={() => handleSaveSnapshot("all")}
-                disabled={isSaving || !sessionId}
-              >
-                <FiSave size={16} />
-                <span>{isSaving ? "저장 중..." : "저장하기"}</span>
-              </button>
-              {saveMessage && (
-                <span style={{ color: "#2e7d32", fontSize: 13, fontWeight: 500, marginLeft: 8 }}>
-                  ✓ {saveMessage}
-                </span>
-              )}
               <div className={styles.canvasStatus}>
                 <span className={styles.statusDot} />
                 <span>
@@ -696,11 +782,11 @@ function Simulation() {
                   ref={canvasHandle}
                   floorPlan={floorPlanDetail ?? null}
                   placements={placementsMap}
-                  selectedRoomId={selectedRoomId}
-                  onRoomClick={handleRoomClick}
+                  selectedRoomId={null}
                   onPlacementMove={handlePlacementMove}
                   onPlacementMoveEnd={handlePlacementMoveEnd}
                   onPlacementRotate={handlePlacementRotate}
+                  onPlacementRoomChange={handlePlacementRoomChange}
                 />
               </div>
 
@@ -777,6 +863,29 @@ function Simulation() {
                       <div style={{ fontSize: 11, color: "#aaa", textAlign: "center" }}>
                         {currentLayoutIdx + 1} / {layouts.length} 배치안
                       </div>
+
+                      <button
+                        type="button"
+                        onClick={() => handleSaveSnapshot("all")}
+                        disabled={isSaving || !sessionId}
+                        style={{
+                          marginTop: 12, width: "auto", minHeight: 36, marginLeft: "auto",
+                          borderRadius: 8, border: "none", cursor: "pointer",
+                          padding: "0 16px",
+                          background: "#3C5D5D", color: "#fff",
+                          fontSize: 13, fontWeight: 600,
+                          display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
+                          opacity: isSaving || !sessionId ? 0.5 : 1,
+                        }}
+                      >
+                        <FiSave size={16} />
+                        {isSaving ? "저장 중..." : "저장하기"}
+                      </button>
+                      {saveMessage && (
+                        <div style={{ color: "#2e7d32", fontSize: 12, textAlign: "center", marginTop: 4 }}>
+                          ✓ {saveMessage}
+                        </div>
+                      )}
                     </div>
                   );
                 })() : null}
@@ -801,12 +910,30 @@ function Simulation() {
                       <button
                         type="button"
                         className={styles.secondaryButton}
+                        style={{ flex: 1, maxWidth: 200 }}
                         onClick={handleGenerate3d}
                         disabled={isGenerating3d}
                       >
-                        다시 생성하기
+                        다시 생성
+                      </button>
+                      <button
+                        type="button"
+                        style={{
+                          flex: 1, maxWidth: 200, padding: "8px 20px", borderRadius: 8,
+                          background: "#3C5D5D", color: "#fff", border: "none",
+                          fontSize: 13, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap",
+                        }}
+                        onClick={() => handleSaveSnapshot("all")}
+                        disabled={isSaving}
+                      >
+                        {isSaving ? "저장 중..." : "저장하기"}
                       </button>
                     </div>
+                    {saveMessage && (
+                      <div style={{ color: "#2e7d32", fontSize: 13, textAlign: "center", padding: "4px 0", fontWeight: 600 }}>
+                        ✓ {saveMessage}
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", gap: 12 }}>
@@ -822,19 +949,7 @@ function Simulation() {
             ) : null}
 
             {activeTab === "cart" ? (() => {
-              const ownedLabelsCart = state?.ownedAppliances ?? [];
-              const labelToCat: Record<string, string> = {
-                "건조기": "의류건조기", "스타일러": "의류관리기",
-                "인덕션": "전기레인지", "전자레인지": "광파오븐/전자레인지", "오븐": "광파오븐/전자레인지",
-              };
-              const ownedCats = new Set([...ownedLabelsCart, ...ownedLabelsCart.map((l) => labelToCat[l] ?? l)]);
-              const allPlacements = Object.values(placementsMap).flat();
-              const placedProducts = allPlacements
-                .map((pl) => pl.product)
-                .filter((p): p is NonNullable<typeof p> => p != null)
-                .filter((p) => !ownedCats.has(p.category) && !ownedCats.has(p.name));
-              const totalPrice = placedProducts.reduce((sum, p) => sum + (p.price ?? 0), 0);
-              const totalListPrice = placedProducts.reduce((sum, p) => sum + (p.list_price ?? 0), 0);
+              const placedProducts = placedProductsForSale;
 
               return (
                 <div className={styles.cartView}>
@@ -858,8 +973,24 @@ function Simulation() {
                             <strong>{product.name}</strong>
                             <span>{product.category}</span>
                           </div>
-                          <div className={styles.cartItemPrice}>
-                            {formatPrice(product.price)}
+                          <div className={styles.cartItemPrice} style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 2 }}>
+                            {product.list_price && product.list_price > (product.price ?? 0) ? (
+                              <>
+                                <span style={{ textDecoration: "line-through", color: "#aaa", fontSize: 12 }}>
+                                  {formatPrice(product.list_price)}
+                                </span>
+                                <span style={{ color: "#e53935", fontWeight: 700 }}>
+                                  {formatPrice(product.price)}
+                                </span>
+                              </>
+                            ) : (
+                              <span style={{ fontWeight: 700 }}>{formatPrice(product.price)}</span>
+                            )}
+                            {product.subscriptionPrice > 0 && (
+                              <span style={{ fontSize: 12, color: "#3C5D5D", fontWeight: 600 }}>
+                                월 {product.subscriptionPrice.toLocaleString()}원
+                              </span>
+                            )}
                           </div>
                         </div>
                       ))
@@ -871,21 +1002,95 @@ function Simulation() {
                     <strong className={styles.cartSummaryTitle}>
                       {state?.packageTitle ?? "추천 패키지"} 구성
                     </strong>
-                    {totalListPrice > totalPrice && totalPrice > 0 ? (
+                    <div style={{ borderBottom: "1px solid #eee", paddingBottom: 8, marginBottom: 8 }}>
                       <div className={styles.cartSummaryRow}>
                         <span>정가 합계</span>
-                        <strong style={{ textDecoration: "line-through", color: "#999" }}>
+                        <strong style={{ textDecoration: totalPrice < totalListPrice ? "line-through" : "none", color: "#999" }}>
                           {formatPrice(totalListPrice)}
                         </strong>
                       </div>
-                    ) : null}
-                    <div className={styles.cartSummaryRow}>
-                      <span>할인가 합계</span>
-                      <strong style={{ color: "#4a6cf7" }}>{formatPrice(totalPrice)}</strong>
+                      <div className={styles.cartSummaryRow}>
+                        <span>할인가 합계</span>
+                        <strong style={{ color: "#e53935" }}>{formatPrice(totalPrice)}</strong>
+                      </div>
                     </div>
+                    {totalSubscription > 0 && (
+                      <div style={{ borderBottom: "1px solid #eee", paddingBottom: 8, marginBottom: 8 }}>
+                        <div className={styles.cartSummaryRow}>
+                          <span>가전 구독</span>
+                          <strong style={{ color: "#3C5D5D" }}>월 {totalSubscription.toLocaleString()}원</strong>
+                        </div>
+                      </div>
+                    )}
+                    {nonSubTotal > 0 && (
+                      <div style={{ borderBottom: "1px solid #eee", paddingBottom: 8, marginBottom: 8 }}>
+                        <div className={styles.cartSummaryRow}>
+                          <span>일시불 합계</span>
+                          <strong>{formatPrice(nonSubTotal)}</strong>
+                        </div>
+                      </div>
+                    )}
                     <div className={styles.cartSummaryRow}>
                       <span>배치 상품 수</span>
                       <strong>{placedProducts.length}개</strong>
+                    </div>
+
+                    <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
+                      {/* 일시불 */}
+                      <div style={{
+                        flex: 1, borderRadius: 10, border: "1px solid #ddd", padding: "14px 12px",
+                        display: "flex", flexDirection: "column", alignItems: "center", gap: 6, background: "#fafafa",
+                      }}>
+                        <span style={{ fontSize: 11, color: "#888", fontWeight: 600 }}>일시불 구매</span>
+                        <strong style={{ fontSize: 18, color: "#222" }}>{formatPrice(totalPrice)}</strong>
+                        <span style={{ fontSize: 11, color: "#aaa" }}>한 번에 결제</span>
+                        <button
+                          type="button"
+                          onClick={(e) => { e.preventDefault(); e.stopPropagation(); setPaymentType("lump"); setIsPaymentOpen(true); }}
+                          disabled={placedProducts.length === 0}
+                          style={{
+                            marginTop: 6, width: "100%", padding: "8px 0",
+                            borderRadius: 8, border: "1px solid #3C5D5D", cursor: "pointer",
+                            background: "#fff", color: "#3C5D5D",
+                            fontSize: 13, fontWeight: 700,
+                            opacity: placedProducts.length === 0 ? 0.4 : 1,
+                          }}
+                        >
+                          일시불 구매
+                        </button>
+                      </div>
+
+                      {/* 구독 */}
+                      <div style={{
+                        flex: 1, borderRadius: 10, border: "2px solid #3C5D5D", padding: "14px 12px",
+                        display: "flex", flexDirection: "column", alignItems: "center", gap: 6, background: "#f0f5f5",
+                      }}>
+                        <span style={{ fontSize: 11, color: "#3C5D5D", fontWeight: 700 }}>구독 + 일시불</span>
+                        {totalSubscription > 0 ? (
+                          <>
+                            <strong style={{ fontSize: 18, color: "#3C5D5D" }}>월 {totalSubscription.toLocaleString()}원</strong>
+                            {nonSubTotal > 0 && (
+                              <span style={{ fontSize: 11, color: "#666" }}>+ 일시불 {formatPrice(nonSubTotal)}</span>
+                            )}
+                          </>
+                        ) : (
+                          <strong style={{ fontSize: 18, color: "#3C5D5D" }}>{formatPrice(totalPrice)}</strong>
+                        )}
+                        <button
+                          type="button"
+                          onClick={(e) => { e.preventDefault(); e.stopPropagation(); setPaymentType("subscription"); setIsPaymentOpen(true); }}
+                          disabled={placedProducts.length === 0}
+                          style={{
+                            marginTop: 6, width: "100%", padding: "8px 0",
+                            borderRadius: 8, border: "none", cursor: "pointer",
+                            background: "#3C5D5D", color: "#fff",
+                            fontSize: 13, fontWeight: 700,
+                            opacity: placedProducts.length === 0 ? 0.4 : 1,
+                          }}
+                        >
+                          구독 구매
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -914,7 +1119,7 @@ function Simulation() {
             <div className={styles.modalHeader}>
               <span className={styles.modalEyebrow}>STEP 1</span>
               <h2 id="floor-plan-title" className={styles.modalTitle}>
-                도면도를 선택해 주세요
+                도면을 선택해 주세요
               </h2>
               <p className={styles.modalDescription}>
                 {isLoadingPlans
@@ -1004,7 +1209,7 @@ function Simulation() {
                 onClick={handleConfirmPlan}
                 disabled={createSession.isPending || isLoadingPlans}
               >
-                {createSession.isPending ? "세션 생성 중..." : "이 도면도로 시작하기"}
+                {createSession.isPending ? "세션 생성 중..." : "이 도면으로 시작하기"}
               </button>
             </div>
           </div>
@@ -1012,66 +1217,176 @@ function Simulation() {
         );
       })() : null}
 
-      <div className={styles.floatingChatbot}>
-        {isChatOpen ? (
-          <div className={styles.chatPanel}>
-            <div className={styles.chatPanelHeader}>
-              <div className={styles.chatPanelTitle}>챗봇</div>
-              <button
-                type="button"
-                className={styles.chatCollapseBtn}
-                aria-label="챗봇 닫기"
-                onClick={() => setIsChatOpen(false)}
-              >
-                <FiChevronDown size={20} />
-              </button>
-            </div>
+      {/* 챗봇 아이콘 제거됨 */}
 
-            <div className={styles.chatMessages}>
-              <div className={styles.chatRow}>
-                <div className={styles.chatAvatar}>
-                  <img src={snowLogo} alt="챗봇 아이콘" className={styles.chatAvatarImage} />
-                </div>
-                <div className={styles.chatBubble}>
-                  선택한 도면도 위에서 배치 시뮬레이션을 이어갈 수 있어요.
-                  <br />
-                  지금은 챗봇 패널이 화면을 덮는 방식으로 올라오고, 시뮬레이션 레이아웃은 그대로
-                  유지됩니다.
-                  <br />
-                  이후 실제 데이터가 연결되면 배치 추천 흐름을 여기서 계속 확장할 수 있어요.
-                </div>
-              </div>
-            </div>
+      {isPaymentOpen && (
+        <div style={{
+          position: "fixed", inset: 0, zIndex: 9999,
+          background: "rgba(0,0,0,0.5)", display: "flex",
+          alignItems: "center", justifyContent: "center",
+        }}>
+          <div style={{
+            background: "#fff", borderRadius: 16, padding: 32,
+            width: "100%", maxWidth: 480, maxHeight: "90vh",
+            overflowY: "auto", boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
+          }}>
+            {paymentStep === "confirm" && (
+              <>
+                <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 4 }}>
+                  {paymentType === "subscription" ? "구독 주문 확인" : "일시불 주문 확인"}
+                </h2>
+                <p style={{ color: "#888", fontSize: 14, marginBottom: 20 }}>선택하신 제품을 확인해주세요</p>
 
-            <form className={styles.chatInputBar} onSubmit={handleChatSubmit}>
-              <div className={styles.chatInputWrap}>
-                <button type="button" className={styles.chatIconBtn} aria-label="추가">
-                  <FiPlus size={20} />
-                </button>
-                <input
-                  className={styles.chatInput}
-                  value={chatInputValue}
-                  onChange={(event) => setChatInputValue(event.target.value)}
-                  placeholder="궁금한 배치 조건이나 요청을 입력해 주세요"
-                  aria-label="추가 질문 입력"
-                />
-                <button type="submit" className={styles.chatSendBtn} aria-label="전송">
-                  <FiArrowUp size={18} />
+                <div style={{ maxHeight: 240, overflowY: "auto", marginBottom: 20 }}>
+                  {placedProductsForSale.map((p, i) => (
+                    <div key={i} style={{
+                      display: "flex", justifyContent: "space-between", alignItems: "center",
+                      padding: "10px 0", borderBottom: "1px solid #f0f0f0",
+                    }}>
+                      <div>
+                        <div style={{ fontWeight: 600, fontSize: 14 }}>{p.name}</div>
+                        <div style={{ color: "#888", fontSize: 12 }}>{p.category}</div>
+                      </div>
+                      <div style={{ textAlign: "right" }}>
+                        {paymentType === "subscription" && p.subscriptionPrice && p.subscriptionPrice > 0 ? (
+                          <>
+                            <div style={{ fontWeight: 700, fontSize: 14, color: "#3C5D5D" }}>월 {p.subscriptionPrice.toLocaleString()}원</div>
+                          </>
+                        ) : (
+                          <div style={{ fontWeight: 700, fontSize: 14 }}>{formatPrice(p.price)}</div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div style={{
+                  background: "#f8f9fa", borderRadius: 10, padding: 16, marginBottom: 20,
+                }}>
+                  {paymentType === "subscription" ? (
+                    <>
+                      {totalSubscription > 0 && (
+                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+                          <span style={{ color: "#3C5D5D", fontWeight: 600 }}>가전 구독 (월)</span>
+                          <strong style={{ color: "#3C5D5D", fontSize: 18 }}>월 {totalSubscription.toLocaleString()}원</strong>
+                        </div>
+                      )}
+                      {nonSubTotal > 0 && (
+                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+                          <span style={{ color: "#888" }}>일시불 제품 합계</span>
+                          <span style={{ fontWeight: 600 }}>{formatPrice(nonSubTotal)}</span>
+                        </div>
+                      )}
+                      <div style={{
+                        display: "flex", justifyContent: "space-between",
+                        borderTop: "1px solid #e0e0e0", paddingTop: 8,
+                      }}>
+                        <span style={{ fontWeight: 700, fontSize: 16 }}>결제 금액</span>
+                        <div style={{ textAlign: "right" }}>
+                          <div style={{ fontWeight: 700, fontSize: 18, color: "#3C5D5D" }}>월 {totalSubscription.toLocaleString()}원</div>
+                          {nonSubTotal > 0 && (
+                            <div style={{ fontSize: 12, color: "#888" }}>+ 일시불 {formatPrice(nonSubTotal)}</div>
+                          )}
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      {totalListPrice > totalPrice && totalPrice > 0 && (
+                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+                          <span style={{ color: "#888" }}>정가 합계</span>
+                          <span style={{ textDecoration: "line-through", color: "#aaa" }}>{formatPrice(totalListPrice)}</span>
+                        </div>
+                      )}
+                      {totalListPrice > totalPrice && totalPrice > 0 && (
+                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+                          <span style={{ color: "#e53935" }}>할인</span>
+                          <span style={{ color: "#e53935", fontWeight: 600 }}>-{formatPrice(totalListPrice - totalPrice)}</span>
+                        </div>
+                      )}
+                      <div style={{
+                        display: "flex", justifyContent: "space-between",
+                        borderTop: totalListPrice > totalPrice ? "1px solid #e0e0e0" : "none",
+                        paddingTop: totalListPrice > totalPrice ? 8 : 0,
+                      }}>
+                        <span style={{ fontWeight: 700, fontSize: 16 }}>결제 금액</span>
+                        <span style={{ fontWeight: 700, fontSize: 18, color: "#3C5D5D" }}>{formatPrice(totalPrice)}</span>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                <div style={{ display: "flex", gap: 10 }}>
+                  <button
+                    type="button"
+                    onClick={() => { setIsPaymentOpen(false); setPaymentStep("confirm"); }}
+                    style={{
+                      flex: 1, minHeight: 48, borderRadius: 10,
+                      border: "1px solid #ddd", background: "#fff",
+                      fontSize: 15, fontWeight: 600, cursor: "pointer",
+                    }}
+                  >
+                    취소
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPaymentStep("processing");
+                      setTimeout(() => setPaymentStep("done"), 2000);
+                    }}
+                    style={{
+                      flex: 2, minHeight: 48, borderRadius: 10,
+                      border: "none", background: "#3C5D5D", color: "#fff",
+                      fontSize: 15, fontWeight: 700, cursor: "pointer",
+                    }}
+                  >
+                    {paymentType === "subscription" ? "구독 결제하기" : "일시불 결제하기"}
+                  </button>
+                </div>
+              </>
+            )}
+
+            {paymentStep === "processing" && (
+              <div style={{ textAlign: "center", padding: "40px 0" }}>
+                <FiLoader size={40} style={{ animation: "spin 1s linear infinite", color: "#3C5D5D" }} />
+                <p style={{ marginTop: 16, fontSize: 16, fontWeight: 600 }}>결제 처리 중...</p>
+                <p style={{ color: "#888", fontSize: 14 }}>잠시만 기다려주세요</p>
+              </div>
+            )}
+
+            {paymentStep === "done" && (
+              <div style={{ textAlign: "center", padding: "40px 0" }}>
+                <div style={{
+                  width: 64, height: 64, borderRadius: "50%",
+                  background: "#3C5D5D", color: "#fff",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  margin: "0 auto 16px", fontSize: 28,
+                }}>
+                  ✓
+                </div>
+                <h3 style={{ fontSize: 20, fontWeight: 700, marginBottom: 8 }}>결제가 완료되었습니다</h3>
+                <p style={{ color: "#888", fontSize: 14, marginBottom: 24 }}>
+                  {placedProductsForSale.length}개 제품 · {paymentType === "subscription" && totalSubscription > 0
+                    ? `월 ${totalSubscription.toLocaleString()}원${nonSubTotal > 0 ? ` + 일시불 ${formatPrice(nonSubTotal)}` : ""}`
+                    : `총 ${formatPrice(totalPrice)}`
+                  }
+                </p>
+                <button
+                  type="button"
+                  onClick={() => { setIsPaymentOpen(false); setPaymentStep("confirm"); }}
+                  style={{
+                    minHeight: 44, padding: "0 32px", borderRadius: 10,
+                    border: "none", background: "#3C5D5D", color: "#fff",
+                    fontSize: 15, fontWeight: 700, cursor: "pointer",
+                  }}
+                >
+                  확인
                 </button>
               </div>
-            </form>
+            )}
           </div>
-        ) : (
-          <button
-            type="button"
-            className={styles.chatToggleBtn}
-            aria-label="챗봇 열기"
-            onClick={() => setIsChatOpen(true)}
-          >
-            <img src={chatbotIcon} alt="" className={styles.chatToggleIcon} aria-hidden="true" />
-          </button>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

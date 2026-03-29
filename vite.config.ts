@@ -25,7 +25,7 @@ export default defineConfig({
         ws: true,
       },
       "/sim-api": {
-        target: "http://localhost:8000",
+        target: "http://54.116.93.66:8001",
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/sim-api/, "/api"),
       },

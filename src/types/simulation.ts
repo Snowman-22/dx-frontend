@@ -24,6 +24,7 @@ export interface FloorPlanRoom {
   height_mm: number;
   is_placeable: boolean;
   features: RoomFeature[];
+  open_walls?: string[];
 }
 
 export interface FloorPlan {
@@ -78,6 +79,7 @@ export interface Session {
 export interface SessionCreate {
   floor_plan_id: number;
   session_name?: string;
+  user_id?: number;
 }
 
 // ─── Placement ───

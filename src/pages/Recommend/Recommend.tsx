@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { prestartChat, startChat, toStarterPackageType } from "@/services/chatService";
@@ -73,6 +73,11 @@ function Recommend() {
   const [selected, setSelected] = useState<LifeTypeId | null>(null);
   const [isLoginPromptOpen, setIsLoginPromptOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    document.title = "Home Canvas";
+    return () => { document.title = "LGE.COM | LG전자"; };
+  }, []);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { isLoggedIn } = useAuth();

@@ -13,6 +13,7 @@ import styles from "./RecommendChatbot.module.css";
 
 type RecommendAppliance = {
   product_id: number;
+  modelId: string;
   name: string;
   category: string;
   totalPrice: number;
@@ -38,6 +39,7 @@ type RecommendPackage = {
   appliances: RecommendAppliance[];
   furniture: RecommendFurniture[];
   recommendationReason: string;
+  recommendationPlus: string | null;
 };
 
 type ChatMessage = {
@@ -88,10 +90,30 @@ function parseRecommendations(response: RecommendationsPageResponse): RecommendP
 
     try {
       const parsed = JSON.parse(rec.products);
-      console.log("[parseRecommendations] raw appliance[0]:", parsed.appliances?.[0]);
-      console.log("[parseRecommendations] raw furniture[0]:", parsed.furniture?.[0]);
-      appliances = (parsed.appliances ?? []).map((a: Record<string, unknown>) => ({
+
+      // 형식 1: {appliances: [...], furniture: [...]} (이전 형식)
+      // 형식 2: [{...}, {...}, ...] (새 형식 - 단순 배열)
+      let rawAppliances: Record<string, unknown>[] = [];
+      let rawFurniture: Record<string, unknown>[] = [];
+
+      if (Array.isArray(parsed)) {
+        // 새 형식: 단순 배열 → totalPrice 키가 있으면 가전, price 키가 있으면 가구
+        for (const item of parsed) {
+          if (item.totalPrice !== undefined) {
+            rawAppliances.push(item);
+          } else {
+            rawFurniture.push(item);
+          }
+        }
+      } else {
+        // 이전 형식: {appliances, furniture} 객체
+        rawAppliances = parsed.appliances ?? [];
+        rawFurniture = parsed.furniture ?? [];
+      }
+
+      appliances = rawAppliances.map((a) => ({
         product_id: (a.product_id as number) ?? (a.productId as number) ?? 0,
+        modelId: (a.modelId as string) ?? (a.model_id as string) ?? "",
         name: a.name as string,
         category: a.category as string,
         totalPrice: (a.totalPrice as number) ?? 0,
@@ -100,7 +122,7 @@ function parseRecommendations(response: RecommendationsPageResponse): RecommendP
         productUrl: (a.productUrl as string) ?? "",
         popularityScore: (a.popularityScore as number) ?? 0,
       }));
-      furniture = (parsed.furniture ?? []).map((f: Record<string, unknown>) => ({
+      furniture = rawFurniture.map((f) => ({
         product_id: (f.product_id as number) ?? (f.productId as number) ?? 0,
         name: f.name as string,
         category: f.category as string,
@@ -119,6 +141,7 @@ function parseRecommendations(response: RecommendationsPageResponse): RecommendP
       appliances,
       furniture,
       recommendationReason: rec.reason ?? "",
+      recommendationPlus: rec.recommendationPlus ?? rec.recommendationplus ?? rec.recommendation_plus ?? null,
     };
   });
 }
@@ -136,10 +159,16 @@ type LocationState = {
   lifeType?: string;
   interiorStyle?: string;
   ownedAppliances?: string[];
+  lifestyle?: string[];
+  budget?: number;
   recommendations?: RecommendationsPageResponse;
 } | null;
 
 function RecommendChatbot() {
+  useEffect(() => {
+    document.title = "Home Canvas";
+    return () => { document.title = "LGE.COM | LG전자"; };
+  }, []);
   const navigate = useNavigate();
   const location = useLocation();
   const state = location.state as LocationState;
@@ -151,45 +180,70 @@ function RecommendChatbot() {
   const [expandedPackages, setExpandedPackages] = useState<Record<string, boolean>>({});
   const [selectedSort, setSelectedSort] = useState<PackageSortType>("default");
   const [isWaitingResponse, setIsWaitingResponse] = useState(false);
-  const [recommendPackages, setRecommendPackages] = useState<RecommendPackage[]>(() =>
-    state?.recommendations ? parseRecommendations(state.recommendations) : [],
-  );
+  const [recommendPackages, setRecommendPackages] = useState<RecommendPackage[]>(() => {
+    const parsed = state?.recommendations ? parseRecommendations(state.recommendations) : [];
+    // STOMP에서 받은 추천 데이터로 recommendationPlus 보강
+    const stompRecs = (state as Record<string, unknown>)?.stompRecommendations as Record<string, unknown>[] | null;
+    if (stompRecs && Array.isArray(stompRecs)) {
+      for (const pkg of parsed) {
+        const match = stompRecs.find((sr) => sr.package_name === pkg.typeLabel);
+        if (match && match.recommendationPlus && !pkg.recommendationPlus) {
+          pkg.recommendationPlus = match.recommendationPlus as string;
+        }
+      }
+    }
+    return parsed;
+  });
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasNoMore, setHasNoMore] = useState(() =>
     state?.recommendations ? !state.recommendations.has_next : false,
   );
-  const maxPage = 3;
+  const maxPage = 4;
+  const [pageCache, setPageCache] = useState<Record<number, RecommendPackage[]>>(() => {
+    const init: Record<number, RecommendPackage[]> = {};
+    if (recommendPackages.length > 0) init[1] = recommendPackages;
+    return init;
+  });
   const collapsedApplianceLimit = isChatOpen ? 4 : 5;
   const chatMessagesRef = useRef<HTMLDivElement | null>(null);
   const stompInitRef = useRef(false);
 
-  const handleLoadMore = useCallback(async () => {
-    if (!convId || isLoadingMore || currentPage >= maxPage) return;
-    const nextPage = currentPage + 1;
-    setIsLoadingMore(true);
+  const handleGoToPage = useCallback(async (targetPage: number) => {
+    if (!convId || isLoadingMore || targetPage < 1 || targetPage > maxPage) return;
 
+    // 캐시에 있으면 바로 표시
+    if (pageCache[targetPage]) {
+      setRecommendPackages(pageCache[targetPage]);
+      setCurrentPage(targetPage);
+      setExpandedPackages({});
+      return;
+    }
+
+    // 캐시에 없으면 API 호출
+    setIsLoadingMore(true);
     try {
       const { fetchRecommendations } = await import("@/services/chatService");
-      const response = await fetchRecommendations(convId, nextPage, 1, 0);
+      const response = await fetchRecommendations(convId, targetPage, 1, 0);
 
       if (response.recommendations.length === 0) {
         setHasNoMore(true);
       } else {
         const newPackages = parseRecommendations(response);
+        setPageCache((prev) => ({ ...prev, [targetPage]: newPackages }));
         setRecommendPackages(newPackages);
-        setCurrentPage(nextPage);
+        setCurrentPage(targetPage);
         setExpandedPackages({});
-        if (!response.has_next || nextPage >= maxPage) {
+        if (!response.has_next || targetPage >= maxPage) {
           setHasNoMore(true);
         }
       }
     } catch (err) {
-      console.error("Failed to load more recommendations:", err);
+      console.error("Failed to load recommendations:", err);
     } finally {
       setIsLoadingMore(false);
     }
-  }, [convId, isLoadingMore, currentPage]);
+  }, [convId, isLoadingMore, pageCache]);
 
   const sortedRecommendPackages = [...recommendPackages].sort((leftPackage, rightPackage) => {
     if (selectedSort === "price") {
@@ -217,12 +271,33 @@ function RecommendChatbot() {
 
         unsubscribe = subscribeTopic(convId, (body) => {
           // 서버 응답 수신 → aiResponse 우선 파싱
-          const text =
-            (body.aiResponse as string) ??
-            (body.assistantText as string) ??
-            (body.answer as string) ??
-            (body.message as string) ??
-            JSON.stringify(body);
+          let text: string | null = null;
+
+          // 1차: 직접 키 접근
+          if (typeof body.aiResponse === "string" && body.aiResponse.trim()) {
+            text = body.aiResponse;
+          } else if (typeof body.assistantText === "string" && body.assistantText.trim()) {
+            text = body.assistantText;
+          } else if (typeof body.answer === "string" && body.answer.trim()) {
+            text = body.answer;
+          } else if (typeof body.message === "string" && body.message.trim()) {
+            text = body.message;
+          }
+
+          // 2차: body 전체를 문자열로 탐색 (aiResponse가 중첩 객체 안에 있을 수 있음)
+          if (!text) {
+            const raw = JSON.stringify(body);
+            const match = raw.match(/"aiResponse"\s*:\s*"([^"]+)"/);
+            if (match) {
+              text = match[1].replace(/\\n/g, "\n").replace(/\\"/g, '"');
+            }
+          }
+
+          // aiResponse가 없으면 무시 (JSON 원본 출력 방지)
+          if (!text) {
+            console.log("[RecommendChatbot] 서버 응답에 텍스트 없음, 무시:", Object.keys(body));
+            return;
+          }
 
           setChatMessages((prev) => [
             ...prev,
@@ -305,6 +380,22 @@ function RecommendChatbot() {
     <div className={`${styles.page} ${isChatOpen ? styles.pageChatOpen : ""}`}>
       <section className={styles.leftPane}>
         <div className={styles.leftPaneInner}>
+          <button
+            type="button"
+            onClick={() => {
+              // 캐시 삭제
+              sessionStorage.clear();
+              navigate("/");
+            }}
+            style={{
+              display: "flex", alignItems: "center", gap: 6,
+              background: "none", border: "none", cursor: "pointer",
+              color: "#3C5D5D", fontSize: 14, fontWeight: 600,
+              padding: "8px 0", marginBottom: 8,
+            }}
+          >
+            ← 메인으로
+          </button>
           <div className={styles.hero}>
             <img src={snowLogo} alt="" className={styles.heroLogo} aria-hidden="true" />
             <div className={styles.heroContent}>
@@ -363,8 +454,7 @@ function RecommendChatbot() {
               const visibleApplianceItems = isExpanded
                 ? applianceItems
                 : applianceItems.slice(0, collapsedApplianceLimit);
-              const hasMoreItems =
-                furnitureItems.length > 0 || applianceItems.length > visibleApplianceItems.length;
+              // 항상 토글 가능
 
               return (
                 <section key={recommendPackage.id} className={styles.packageSection}>
@@ -398,14 +488,9 @@ function RecommendChatbot() {
                       <button
                         type="button"
                         className={styles.optionBtn}
-                      onClick={() => {
-                        if (hasMoreItems) {
-                          togglePackage(recommendPackage.title);
-                        }
-                      }}
-                      disabled={!hasMoreItems}
+                      onClick={() => togglePackage(recommendPackage.title)}
                     >
-                        {hasMoreItems && isExpanded ? "옵션 접기" : "옵션 더보기"}
+                        {isExpanded ? "옵션 접기 ▲" : "옵션 더보기 ▼"}
                       </button>
                     </div>
                   </div>
@@ -429,19 +514,17 @@ function RecommendChatbot() {
                                   />
                                 </div>
                                 <strong className={styles.productName}>{item.name}</strong>
-                                <span className={styles.productCategory}>{item.category}</span>
-                                {item.subscriptionPrice > 0 ? (
-                                  <>
-                                    <div className={styles.subscriptionPill}>
-                                      {`월 ${formatPrice(item.subscriptionPrice)}`}
-                                    </div>
-                                    <span className={styles.productPriceSub}>
-                                      {formatPrice(item.totalPrice)}
-                                    </span>
-                                  </>
-                                ) : (
-                                  <div className={styles.pricePill}>
-                                    {formatPrice(item.totalPrice)}
+                                <span className={styles.productCategory}>
+                                  {item.category}
+                                  {item.category === "TV" && item.modelId && (() => {
+                                    const match = item.modelId.match(/^(\d+)/);
+                                    return match ? ` · ${match[1]}인치` : "";
+                                  })()}
+                                </span>
+                                <span className={styles.productPriceMain}>{formatPrice(item.totalPrice)}</span>
+                                {item.subscriptionPrice > 0 && (
+                                  <div className={styles.subscriptionPill}>
+                                    {`월 ${formatPrice(item.subscriptionPrice)}`}
                                   </div>
                                 )}
                                 {item.productUrl ? (
@@ -509,19 +592,17 @@ function RecommendChatbot() {
                               <img src={item.image} alt={item.name} className={styles.productImage} />
                             </div>
                             <strong className={styles.productName}>{item.name}</strong>
-                            <span className={styles.productCategory}>{item.category}</span>
-                            {item.subscriptionPrice > 0 ? (
-                              <>
-                                <div className={styles.subscriptionPill}>
-                                  {`월 ${formatPrice(item.subscriptionPrice)}`}
-                                </div>
-                                <span className={styles.productPriceSub}>
-                                  {formatPrice(item.totalPrice)}
-                                </span>
-                              </>
-                            ) : (
-                              <div className={styles.pricePill}>
-                                {formatPrice(item.totalPrice)}
+                            <span className={styles.productCategory}>
+                              {item.category}
+                              {item.category === "TV" && item.modelId && (() => {
+                                const match = item.modelId.match(/^(\d+)/);
+                                return match ? ` · ${match[1]}인치` : "";
+                              })()}
+                            </span>
+                            <span className={styles.productPriceMain}>{formatPrice(item.totalPrice)}</span>
+                            {item.subscriptionPrice > 0 && (
+                              <div className={styles.subscriptionPill}>
+                                {`월 ${formatPrice(item.subscriptionPrice)}`}
                               </div>
                             )}
                             {item.productUrl ? (
@@ -544,19 +625,33 @@ function RecommendChatbot() {
                     {isExpanded && recommendPackage.recommendationReason ? (
                       <div style={{
                         margin: "12px 0 8px",
-                        padding: "12px 14px",
-                        background: "#f0f7f0",
-                        borderRadius: 8,
-                        borderLeft: "3px solid #4caf50",
+                        padding: "12px 14px 12px 0",
                       }}>
-                        <div style={{ fontSize: 11, color: "#2e7d32", fontWeight: 700, marginBottom: 4 }}>
+                        <div style={{ fontSize: 14, color: "#2e7d32", fontWeight: 700, marginBottom: 4 }}>
                           💡 AI 추천 이유
                         </div>
                         <p style={{
-                          margin: 0, fontSize: 15.5, fontWeight: 500,
+                          margin: 0, fontSize: 16.5, fontWeight: 500,
                           color: "#2c3e2c", lineHeight: 1.65, wordBreak: "keep-all",
                         }}>
                           {recommendPackage.recommendationReason}
+                        </p>
+                      </div>
+                    ) : null}
+                    {isExpanded && recommendPackage.recommendationPlus ? (
+                      <div style={{
+                        margin: "8px 0",
+                        padding: "10px 14px",
+                        borderRadius: 8,
+                      }}>
+                        <div style={{ fontSize: 13, color: "#3C5D5D", fontWeight: 700, marginBottom: 4 }}>
+                          💡 참고사항
+                        </div>
+                        <p style={{
+                          margin: 0, fontSize: 13.5, fontWeight: 500,
+                          color: "#5d4037", lineHeight: 1.6, wordBreak: "keep-all",
+                        }}>
+                          {recommendPackage.recommendationPlus}
                         </p>
                       </div>
                     ) : null}
@@ -572,14 +667,35 @@ function RecommendChatbot() {
                             ...recommendPackage.furniture.map((f) => f.product_id),
                           ].filter((id) => id > 0);
                           console.log("[RecommendChatbot] productIds to simulation:", productIds);
+                          const productDetails = [
+                            ...recommendPackage.appliances.map((a) => ({
+                              product_id: a.product_id,
+                              name: a.name,
+                              category: a.category,
+                              totalPrice: a.totalPrice,
+                              subscriptionPrice: a.subscriptionPrice,
+                              image: a.image,
+                            })),
+                            ...recommendPackage.furniture.map((f) => ({
+                              product_id: f.product_id,
+                              name: f.name,
+                              category: f.category,
+                              totalPrice: f.price,
+                              subscriptionPrice: 0,
+                              image: f.image,
+                            })),
+                          ];
                           navigate("/simulation", {
                             state: {
                               packageTitle: recommendPackage.title,
                               packageTypeLabel: recommendPackage.typeLabel,
                               itemCount: getPackageItemCount(recommendPackage),
                               productIds,
+                              productDetails,
                               interiorStyle: state?.interiorStyle ?? undefined,
                               ownedAppliances: state?.ownedAppliances ?? undefined,
+                              lifestyle: state?.lifestyle ?? undefined,
+                              budget: state?.budget ?? undefined,
                             },
                           });
                         }}
@@ -587,7 +703,33 @@ function RecommendChatbot() {
                         <FiHome size={16} />
                         <span>배치보기</span>
                       </button>
-                      <button type="button" className={styles.packageActionBtn}>
+                      <button
+                        type="button"
+                        className={styles.packageActionBtn}
+                        onClick={async () => {
+                          console.log("[Cart] recommendPackage.id:", recommendPackage.id, "convId:", convId);
+                          if (!convId || !recommendPackage.id) {
+                            alert("장바구니 추가에 필요한 정보가 없습니다. 다시 추천을 받아주세요.");
+                            return;
+                          }
+                          try {
+                            const api = (await import("axios")).default;
+                            const token = localStorage.getItem("lg_auth_token");
+                            const baseUrl = import.meta.env.VITE_API_BASE || "/api";
+                            const headers = { Authorization: `Bearer ${token}` };
+
+                            await api.post(
+                              `${baseUrl}/cart/${convId}/select`,
+                              { recommendation_id: recommendPackage.id },
+                              { headers },
+                            );
+                            alert("장바구니에 추가되었습니다!");
+                          } catch (err) {
+                            console.error("Cart save failed:", err);
+                            alert("장바구니 추가에 실패했습니다.");
+                          }
+                        }}
+                      >
                         <FiShoppingCart size={16} />
                         <span>카트</span>
                       </button>
@@ -598,21 +740,30 @@ function RecommendChatbot() {
             })}
           </div>
 
-          {!hasNoMore && currentPage < maxPage && (
-            <div className={styles.moreWrap}>
-              <button
-                type="button"
-                className={styles.moreBtn}
-                onClick={handleLoadMore}
-                disabled={isLoadingMore || !convId}
-              >
-                {isLoadingMore
-                  ? "추천 불러오는 중..."
-                  : `다른 추천 보기 (${currentPage}/${maxPage})`}
-              </button>
-            </div>
-          )}
-          {hasNoMore && (
+          <div className={styles.moreWrap} style={{ display: "flex", gap: 12, justifyContent: "center", alignItems: "center" }}>
+            <button
+              type="button"
+              className={styles.moreBtn}
+              onClick={() => handleGoToPage(currentPage - 1)}
+              disabled={isLoadingMore || currentPage <= 1}
+              style={{ opacity: currentPage <= 1 ? 0.4 : 1 }}
+            >
+              ← 이전 추천
+            </button>
+            <span style={{ color: "#666", fontSize: 14, fontWeight: 600 }}>
+              {currentPage} / {maxPage}
+            </span>
+            <button
+              type="button"
+              className={styles.moreBtn}
+              onClick={() => handleGoToPage(currentPage + 1)}
+              disabled={isLoadingMore || !convId || (hasNoMore && currentPage >= maxPage)}
+              style={{ opacity: (hasNoMore && currentPage >= maxPage) ? 0.4 : 1 }}
+            >
+              {isLoadingMore ? "불러오는 중..." : "다음 추천 →"}
+            </button>
+          </div>
+          {hasNoMore && currentPage >= maxPage && (
             <div className={styles.moreWrap}>
               <span style={{ color: "#999", fontSize: 14 }}>
                 더 이상 추천이 없습니다.
@@ -693,7 +844,7 @@ function RecommendChatbot() {
                   type="submit"
                   className={styles.chatSendBtn}
                   aria-label="전송"
-                  disabled={isWaitingResponse}
+                  disabled={isWaitingResponse || !chatInputValue.trim()}
                 >
                   {isWaitingResponse ? (
                     <span className={styles.chatSpinner} />

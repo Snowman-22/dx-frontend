@@ -12,41 +12,32 @@ import {
   FiUser,
   FiX,
 } from "react-icons/fi";
-import { useAuth } from "@/contexts/AuthContext";
+import axios from "axios";
+import { useAuth, getAccessToken } from "@/contexts/AuthContext";
 import simulationApi from "@/services/simulationApi";
 import styles from "./MyPage.module.css";
 
-const CART_ITEMS = [
-  {
-    id: "cart-1",
-    name: "LG 오브제컬렉션 워시타워",
-    detail: "세탁기 + 건조기 패키지",
-    price: "3,590,000원",
-    tag: "장바구니 담김",
-  },
-  {
-    id: "cart-2",
-    name: "LG 스탠바이미 2",
-    detail: "27형 라이프스타일 스크린",
-    price: "1,090,000원",
-    tag: "관심 상품",
-  },
-];
+const apiBase = import.meta.env.VITE_API_BASE || "/api";
 
-const CHAT_HISTORY = [
-  {
-    id: "chat-1",
-    title: "싱글 라이프 맞춤 공간 추천",
-    summary: "원룸 12평 기준으로 가전 배치와 수납형 가구를 추천받았어요.",
-    time: "오늘 14:20",
-  },
-  {
-    id: "chat-2",
-    title: "부모님과 함께하는 집 리모델링",
-    summary: "동선이 편한 주방과 거실 배치, 안전 가전 중심으로 상담했어요.",
-    time: "어제 18:40",
-  },
-];
+type CartItem = {
+  cart_id: number;
+  product_id: number;
+  model_id: string;
+  name: string;
+  brand: string;
+  category: string;
+  quantity: number;
+  price: number;
+  image: string;
+  product_url: string;
+};
+
+type ChatHistoryItem = {
+  id: string;
+  title: string;
+  summary: string;
+  time: string;
+};
 
 type SnapshotItem = {
   session_id: number;
@@ -56,6 +47,7 @@ type SnapshotItem = {
   area_m2: number | null;
   has_2d: boolean;
   has_3d: boolean;
+  snapshot_2d: string | null;
   snapshot_3d_url: string | null;
   saved_at: string | null;
 };
@@ -75,16 +67,124 @@ function formatDate(iso: string | null) {
 function MyPage() {
   const { user, isLoggedIn } = useAuth();
   const [snapshots, setSnapshots] = useState<SnapshotItem[]>([]);
+  const [chatHistory, setChatHistory] = useState<ChatHistoryItem[]>([]);
   const [viewerImage, setViewerImage] = useState<string | null>(null);
   const [viewerTitle, setViewerTitle] = useState("");
   const [isLoadingImage, setIsLoadingImage] = useState(false);
+  const [expandedChatId, setExpandedChatId] = useState<string | null>(null);
+  const [chatDetail, setChatDetail] = useState<Record<string, { questions: { step: string; question: string; answer: string }[]; packages: string[] }>>({});
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
 
   useEffect(() => {
+    const params = user?.id ? { user_id: user.id } : {};
     simulationApi
-      .get<SnapshotItem[]>("/snapshots")
+      .get<SnapshotItem[]>("/snapshots", { params })
       .then(({ data }) => setSnapshots(data))
       .catch((err) => console.error("Failed to load snapshots:", err));
-  }, []);
+  }, [user]);
+
+  // 장바구니 로드
+  useEffect(() => {
+    if (!user?.id) return;
+    const token = getAccessToken();
+    if (!token) return;
+    simulationApi.get<{ chat_id: string }[]>(`/user/${user.id}/cart-chats`)
+      .then(async ({ data: chats }) => {
+        // 가장 최근 chatId부터 장바구니가 있는 것을 찾음
+        for (const chat of chats) {
+          try {
+            const { data } = await axios.get<CartItem[]>(
+              `${apiBase}/cart/${chat.chat_id}`,
+              { headers: { Authorization: `Bearer ${token}` } },
+            );
+            if (data.length > 0) {
+              setCartItems(data);
+              return;
+            }
+          } catch { /* skip */ }
+        }
+        setCartItems([]);
+      })
+      .catch((err) => console.error("Failed to load cart:", err));
+  }, [user]);
+
+  // 채팅 내역 로드
+  useEffect(() => {
+    if (!user) return;
+    simulationApi.get<ChatHistoryItem[]>("/chat-history", { params: { user_id: user.id } })
+      .then(({ data }) => {
+        const items = data.map((c) => ({ ...c, time: formatDate(c.time) }));
+        setChatHistory(items);
+      })
+      .catch((err) => console.error("Failed to load chat history:", err));
+  }, [user]);
+
+  const loadChatDetail = async (chatId: string) => {
+    if (chatDetail[chatId]) {
+      setExpandedChatId(expandedChatId === chatId ? null : chatId);
+      return;
+    }
+    const token = getAccessToken();
+    if (!token) return;
+    try {
+      const { data } = await axios.get(`${apiBase}/chats/${chatId}/history`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const msgs = data?.conversation?.messages ?? [];
+      const questions: { step: string; question: string; answer: string }[] = [];
+
+      const stepLabels: Record<string, string> = {
+        CHAT_0: "집 평수", CHAT_2: "보유/필요 가전", CHAT_3: "가구 추천 여부",
+        CHAT_4: "인테리어 스타일", CHAT_5: "라이프스타일", CHAT_6: "예산", CHAT_7: "필요 가구",
+        RECOMMEND_RAG: "질문",
+      };
+
+      for (let i = 0; i < msgs.length; i++) {
+        const msg = msgs[i];
+        if (msg.role === "USER" && msg.step_code) {
+          const payload = msg.payload_json;
+          let answerStr = "";
+          if (typeof payload === "string") {
+            answerStr = payload || "(선택 안 함)";
+          } else if (Array.isArray(payload)) {
+            answerStr = payload.join(", ");
+          } else if (payload && typeof payload === "object") {
+            if (payload.owned || payload.needed) {
+              const owned = payload.owned?.join(", ") || "없음";
+              const needed = payload.needed?.join(", ") || "없음";
+              answerStr = `보유: ${owned} / 필요: ${needed}`;
+            } else {
+              answerStr = JSON.stringify(payload);
+            }
+          }
+
+          // RECOMMEND_RAG인 경우 다음 ASSISTANT 메시지에서 답변 추출
+          let aiAnswer = "";
+          if (msg.step_code === "RECOMMEND_RAG") {
+            const nextMsg = msgs[i + 1];
+            if (nextMsg?.role === "ASSISTANT") {
+              aiAnswer = nextMsg.ai_response || nextMsg.data_json?.ai_response || nextMsg.payload_json || "";
+            }
+          }
+
+          questions.push({
+            step: stepLabels[msg.step_code] || msg.step_code,
+            question: msg.step_code === "RECOMMEND_RAG"
+              ? answerStr
+              : (msg.assistant_text || stepLabels[msg.step_code] || ""),
+            answer: msg.step_code === "RECOMMEND_RAG"
+              ? (aiAnswer || "답변 대기 중")
+              : answerStr,
+          });
+        }
+      }
+      const packages: string[] = [];
+      setChatDetail((prev) => ({ ...prev, [chatId]: { questions, packages } }));
+      setExpandedChatId(chatId);
+    } catch {
+      console.error("Failed to load chat detail");
+    }
+  };
 
   const floorPlanSnapshots = snapshots.filter((s) => s.has_2d);
   const renderedSnapshots = snapshots.filter((s) => s.has_3d);
@@ -138,12 +238,12 @@ function MyPage() {
             <div className={styles.summaryGrid}>
               <div className={styles.summaryCard}>
                 <FiShoppingCart size={18} />
-                <strong>{CART_ITEMS.length}</strong>
+                <strong>{cartItems.length}</strong>
                 <span>장바구니 상품</span>
               </div>
               <div className={styles.summaryCard}>
                 <FiMessageSquare size={18} />
-                <strong>{CHAT_HISTORY.length}</strong>
+                <strong>{chatHistory.length}</strong>
                 <span>챗봇 상담 내역</span>
               </div>
               <div className={styles.summaryCard}>
@@ -185,18 +285,26 @@ function MyPage() {
                 </div>
               </div>
               <div className={styles.list}>
-                {CART_ITEMS.map((item) => (
-                  <div key={item.id} className={styles.listItem}>
-                    <div className={styles.itemText}>
-                      <strong>{item.name}</strong>
-                      <span>{item.detail}</span>
+                {cartItems.length === 0 ? (
+                  <p style={{ color: "#999", padding: "20px 0", textAlign: "center" }}>저장된 장바구니가 없습니다.</p>
+                ) : (
+                  cartItems.map((item) => (
+                    <div key={item.cart_id} className={styles.listItem}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                        {item.image && (
+                          <img src={item.image} alt={item.name} style={{ width: 48, height: 48, objectFit: "contain", borderRadius: 4 }} />
+                        )}
+                        <div className={styles.itemText}>
+                          <strong>{item.name}</strong>
+                          <span>{item.brand} · {item.category}</span>
+                        </div>
+                      </div>
+                      <div className={styles.itemMeta}>
+                        <b>{item.price ? `${item.price.toLocaleString()}원` : ""}</b>
+                      </div>
                     </div>
-                    <div className={styles.itemMeta}>
-                      <em>{item.tag}</em>
-                      <b>{item.price}</b>
-                    </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </article>
 
@@ -211,21 +319,57 @@ function MyPage() {
                 </div>
               </div>
               <div className={styles.timeline}>
-                {CHAT_HISTORY.map((item) => (
-                  <div key={item.id} className={styles.timelineItem}>
-                    <div className={styles.timelineDot} />
-                    <div className={styles.timelineContent}>
-                      <div className={styles.timelineHeader}>
-                        <strong>{item.title}</strong>
-                        <span>
-                          <FiClock size={14} />
-                          {item.time}
-                        </span>
+                {chatHistory.length === 0 ? (
+                  <p style={{ color: "#999", padding: "20px 0" }}>상담 내역이 없습니다.</p>
+                ) : (
+                  chatHistory.map((item) => (
+                    <div key={item.id}>
+                      <div
+                        className={styles.timelineItem}
+                        style={{ cursor: "pointer" }}
+                        onClick={() => loadChatDetail(item.id)}
+                      >
+                        <div className={styles.timelineDot} />
+                        <div className={styles.timelineContent}>
+                          <div className={styles.timelineHeader}>
+                            <strong>{item.title}</strong>
+                            <span>
+                              <FiClock size={14} />
+                              {item.time}
+                            </span>
+                          </div>
+                          <p style={{ fontSize: 12, color: "#888" }}>
+                            {expandedChatId === item.id ? "▲ 접기" : "▼ 상세보기"}
+                          </p>
+                        </div>
                       </div>
-                      <p>{item.summary}</p>
+                      {expandedChatId === item.id && chatDetail[item.id] && (
+                        <div style={{
+                          marginLeft: 24, padding: "12px 16px", background: "#f8f9fa",
+                          borderRadius: 10, marginBottom: 12, fontSize: 13,
+                        }}>
+                          {chatDetail[item.id].questions.map((q, i) => (
+                            <div key={i} style={{
+                              display: "flex", gap: 8, marginBottom: 8,
+                              paddingBottom: 8, borderBottom: "1px solid #eee",
+                            }}>
+                              <span style={{ color: "#3C5D5D", fontWeight: 700, minWidth: 90 }}>{q.step}</span>
+                              {q.step === "질문" ? (
+                                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                                  <span style={{ color: "#333", fontWeight: 600 }}>Q. {q.question}</span>
+                                  <span style={{ color: "#666", fontSize: 13 }}>A. {q.answer}</span>
+                                </div>
+                              ) : (
+                                <span style={{ color: "#333" }}>{q.answer}</span>
+                              )}
+                            </div>
+                          ))}
+                          {/* 추천 패키지 목록 제거됨 */}
+                        </div>
+                      )}
                     </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </article>
 
@@ -251,9 +395,19 @@ function MyPage() {
                       onClick={() => openSnapshot(item.session_id, "2d", `${item.floor_plan_name} 배치도`)}
                     >
                       <div className={`${styles.visualPreview} ${styles[`floorTone${(index % 2) + 1}`]}`}>
-                        <div className={styles.roomBoxLarge} />
-                        <div className={styles.roomBoxSmall} />
-                        <div className={styles.roomLine} />
+                        {item.snapshot_2d ? (
+                          <img
+                            src={item.snapshot_2d}
+                            alt={item.floor_plan_name}
+                            style={{ width: "100%", height: "100%", objectFit: "contain", borderRadius: 8 }}
+                          />
+                        ) : (
+                          <>
+                            <div className={styles.roomBoxLarge} />
+                            <div className={styles.roomBoxSmall} />
+                            <div className={styles.roomLine} />
+                          </>
+                        )}
                       </div>
                       <div className={styles.visualText}>
                         <strong>{item.floor_plan_name}</strong>

@@ -53,7 +53,7 @@
 }
 
 .heroTitle {
-  color: #207f70;
+  color: #3C5D5D;
   font-size: clamp(23px, 2.6vw, 38px);
   font-weight: 700;
   line-height: 1.18;
@@ -101,17 +101,19 @@
     border-color 0.2s ease;
 }
 
-.card:hover {
+.card:hover:not(.cardActive) {
   transform: translateY(-2px);
   box-shadow:
     0 18px 30px rgba(150, 170, 145, 0.17),
     inset 0 1px 0 rgba(255, 255, 255, 0.92);
 }
 
-.cardActive {
+.cardActive,
+.cardActive:hover {
+  transform: translateY(-2px);
   box-shadow:
-    0 0 0 2px rgba(125, 212, 123, 0.46),
-    0 18px 30px rgba(130, 176, 125, 0.18),
+    0 0 0 3px #3C5D5D,
+    0 18px 30px rgba(60, 93, 93, 0.2),
     inset 0 1px 0 rgba(255, 255, 255, 0.92);
 }
 
@@ -122,6 +124,7 @@
   content: "";
   position: absolute;
   pointer-events: none;
+  display: none;
 }
 
 .cardGlow {
@@ -140,6 +143,7 @@
   display: flex;
   flex-direction: column;
   min-height: 100%;
+  padding-top: 36px;
 }
 
 .cardTitle {
@@ -152,7 +156,7 @@
 }
 
 .cardTitleAccent {
-  color: #81d172;
+  color: #3C5D5D;
 }
 
 .cardDesc {
@@ -229,12 +233,7 @@
 }
 
 .babyCurve {
-  position: absolute;
-  right: -12px;
-  top: 54px;
-  width: 112px;
-  height: 158px;
-  overflow: visible;
+  display: none;
 }
 
 .card_kids::before {
@@ -255,6 +254,7 @@
 }
 
 .card_parents::before {
+  display: block;
   inset: 0;
   background:
     linear-gradient(180deg, rgba(195, 238, 229, 0.24) 0%, rgba(195, 238, 229, 0.06) 100%),
@@ -263,6 +263,7 @@
 }
 
 .card_parents::after {
+  display: block;
   left: -18px;
   top: 0;
   width: 50px;
@@ -272,6 +273,7 @@
 }
 
 .card_parents .cardArtwork::before {
+  display: block;
   right: -12px;
   top: 0;
   width: 58px;
@@ -281,6 +283,7 @@
 }
 
 .card_parents .cardArtwork::after {
+  display: block;
   left: 50%;
   bottom: 22px;
   width: 106px;

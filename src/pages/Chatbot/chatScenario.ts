@@ -141,7 +141,7 @@ interface ChatScenario {
 }
 
 const INTRO_MESSAGE = `반가워요! 저는 고객님의 소중한 보금자리를 함께 채워나갈 든든한 홈 퍼니싱 파트너예요! 🏠✨
-주거 유형이나 평수, 예산 같은 기본 정보만 알려주시면, 가전과 가구가 완벽한 톤앤매너를 이루는 맞춤형 공간을 큐레이션해 드릴게요. 채팅으로 편하게 제품 리스트를 수정하다 보면, 어느새 꿈꾸던 집의 도면도까지 짠! 하고 완성되어 있을 거예요!`;
+주거 유형이나 평수, 예산 같은 기본 정보만 알려주시면, 가전과 가구가 완벽한 톤앤매너를 이루는 맞춤형 공간을 큐레이션해 드릴게요. 채팅으로 편하게 제품 리스트를 수정하다 보면, 어느새 꿈꾸던 집의 도면까지 짠! 하고 완성되어 있을 거예요!`;
 
 export const CHATBOT_SCENARIO: ChatScenario = {
   lifeTypeLabels: {
@@ -196,7 +196,7 @@ export const CHATBOT_SCENARIO: ChatScenario = {
     {
       order: 6,
       id: "budget",
-      title: "거의 다 왔어요! 총 예산은 어느 정도 생각하고 계세요?",
+      title: "거의 다 왔어요! 이번 프로젝트에 생각하신 총 예산은 어느 정도인가요?",
       answerType: "text-or-button",
     },
   ],
@@ -241,10 +241,10 @@ export const CHATBOT_SCENARIO: ChatScenario = {
     ],
     spaceSize: [
       { id: "8", label: "10평 미만" },
-      { id: "15", label: "10평형대" },
-      { id: "25", label: "20평형대" },
-      { id: "35", label: "30평형대" },
-      { id: "45", label: "30평 이상" },
+      { id: "15", label: "10평대" },
+      { id: "25", label: "20평대" },
+      { id: "35", label: "30평대" },
+      { id: "45", label: "30평대 이상" },
     ],
     furnitureRecommendation: [
       { id: "yes", label: "네! 추천 해주세요" },
@@ -392,18 +392,18 @@ export const CHATBOT_SCENARIO: ChatScenario = {
     furnitureSelectionPrompt: `이제 필요하신 가구를 선택해 주세요!
 여러 개를 선택하실 수 있고, 없으시면 그대로 넘어가셔도 괜찮아요.`,
     furnitureSelectionAcknowledged: "선택하신 가구 정보를 기억하겠습니다!",
-    lifestylePrompt: `이제 생활 방식과 취향을 조금 더 세밀하게 반영해볼게요.
-잠시 후 열리는 선택 창에서 해당되는 항목을 자유롭게 골라주세요.
-선택하고 싶은 항목이 없다면 그대로 넘어가셔도 괜찮아요!`,
+    lifestylePrompt: `이제 라이프스타일과 취향을 세밀하게 반영해 볼게요.
+잠시 후 열리는 창에서 해당하는 항목을 자유롭게 골라주세요.
+원하는 항목이 없다면 바로 넘어가셔도 괜찮습니다.`,
     lifestyleSelected: {
       id: "lifestyle-selected",
       description: "라이프스타일 선택 후 안내 문구",
       template: "{selectedStyles} 취향저격한 제품으로 안내해드릴게요!",
     },
     budgetInvalidMessage: "숫자만 입력해주세요!",
-    budgetPromptDetailed: `거의 다 왔어요! 총 예산은 어느 정도 생각하고 계세요?
-💸 정해진 금액 안에서 효율적으로 공간을 채울 수 있게 계산해 드릴게요!
-직접 입력하실 경우 숫자만 입력해 주세요! 단위는 '만원'으로 계산합니다. (예: 100)`,
+    budgetPromptDetailed: `거의 다 왔어요! 이번 프로젝트에 생각하신 총 예산은 어느 정도인가요?
+💸 정해진 금액 안에서 가장 효율적인 공간 구성을 제안해 드릴게요!
+아래 버튼을 선택하거나, 숫자만 입력해 주세요. (예: 100만 원 → 100 입력)`,
     budgetCompletedMessage: `여기까지 알려주신 정보들 모두 잘 받았어요! 😊
 이제 고객님만의 완벽한 공간을 위한 추천리스트를 확인해보세요! ✨
 추천리스트를 확인하고 나서도 계속 대화를 이어갈 수 있어요!`,
@@ -565,7 +565,7 @@ export function getFurnitureSelectionAcknowledgedMessage(): string {
 
 export function getLifestyleSelectionMessage(selectedStyles: string[]): string {
   void selectedStyles;
-  return "사용자의 취향을 파악 완료했습니다!";
+  return "네, 소중한 취향을 모두 확인했어요!";
 }
 
 export function getBudgetPromptMessage(): string {

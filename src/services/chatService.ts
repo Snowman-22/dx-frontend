@@ -293,6 +293,9 @@ export interface RecommendationDTO {
   reason: string;
   products: string;
   is_selected: boolean;
+  recommendationplus?: string | null;
+  recommendationPlus?: string | null;
+  recommendation_plus?: string | null;
 }
 
 export interface RecommendationsPageResponse {
@@ -308,7 +311,7 @@ export async function fetchRecommendations(
   chatId: string,
   page: number = 1,
   maxRetries: number = 20,
-  retryInterval: number = 8000,
+  retryInterval: number = 5000,
 ): Promise<RecommendationsPageResponse> {
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     const { data } = await api.get<RecommendationsPageResponse>(

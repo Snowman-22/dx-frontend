@@ -37,6 +37,7 @@ interface FloorPlanCanvasProps {
   onPlacementMove?: (roomId: number, placementIndex: number, xMm: number, yMm: number) => void;
   onPlacementMoveEnd?: (roomId: number, placementIndex: number, xMm: number, yMm: number) => void;
   onPlacementRotate?: (roomId: number, placementIndex: number) => void;
+  onPlacementRoomChange?: (fromRoomId: number, placementIndex: number, toRoomId: number, xMm: number, yMm: number) => number;
 }
 
 export interface FloorPlanCanvasHandle {
@@ -127,13 +128,18 @@ function drawRoom(
   const w = br.x - tl.x;
   const h = br.y - tl.y;
 
+  const openWalls = new Set(room.open_walls ?? []);
   const bgColor = ROOM_TYPE_COLORS[room.room_type] ?? "#f8f8f8";
   ctx.fillStyle = room.is_placeable ? bgColor : "#f0f0f0";
   ctx.fillRect(tl.x, tl.y, w, h);
-
   ctx.strokeStyle = isSelected ? "#4a6cf7" : "#555";
   ctx.lineWidth = isSelected ? 3 : 1.5;
-  ctx.strokeRect(tl.x, tl.y, w, h);
+  ctx.beginPath();
+  if (!openWalls.has("north")) { ctx.moveTo(tl.x, tl.y); ctx.lineTo(tl.x + w, tl.y); }
+  if (!openWalls.has("east"))  { ctx.moveTo(tl.x + w, tl.y); ctx.lineTo(tl.x + w, tl.y + h); }
+  if (!openWalls.has("south")) { ctx.moveTo(tl.x + w, tl.y + h); ctx.lineTo(tl.x, tl.y + h); }
+  if (!openWalls.has("west"))  { ctx.moveTo(tl.x, tl.y + h); ctx.lineTo(tl.x, tl.y); }
+  ctx.stroke();
 
   ctx.fillStyle = isSelected ? "#4a6cf7" : "#888";
   const fontSize = Math.max(10, Math.min(14, w / 10));
@@ -382,10 +388,25 @@ function drawPlacement(
     ctx.fillRect(br.x - hs, br.y - hs, hs * 2, hs * 2);
   }
   if (isInvalid) {
+    // 빨간 ⚠ 아이콘
+    const iconSize = Math.max(12, Math.min(18, w / 4));
     ctx.fillStyle = "#ff5252";
-    ctx.font = "bold 12px 'Segoe UI', sans-serif";
-    ctx.textAlign = "right";
-    ctx.fillText("!", br.x - 3, tl.y + 12);
+    ctx.beginPath();
+    ctx.arc(br.x - 2, tl.y + 2, iconSize / 2 + 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#fff";
+    ctx.font = `bold ${iconSize}px 'Segoe UI', sans-serif`;
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillText("!", br.x - 2, tl.y + 3);
+
+    // 위반 메시지 표시
+    if (pl.violations && pl.violations.length > 0) {
+      const msg = pl.violations[0]; // 첫 번째 위반만
+      ctx.fillStyle = "rgba(255,82,82,0.9)";
+      ctx.font = `bold ${Math.max(8, Math.min(10, w / 8))}px 'Segoe UI', sans-serif`;
+      ctx.textAlign = "center"; ctx.textBaseline = "top";
+      ctx.fillText(msg, cx, br.y + 2);
+    }
   }
   ctx.restore();
 }
@@ -428,6 +449,7 @@ const FloorPlanCanvas = forwardRef<FloorPlanCanvasHandle, FloorPlanCanvasProps>(
   onPlacementMove,
   onPlacementMoveEnd,
   onPlacementRotate,
+  onPlacementRoomChange,
 }, ref) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -439,7 +461,7 @@ const FloorPlanCanvas = forwardRef<FloorPlanCanvasHandle, FloorPlanCanvasProps>(
     },
   }));
   const [dragging, setDragging] = useState<{
-    roomId: number; index: number; startMmX: number; startMmY: number;
+    roomId: number; index: number; placementId: number; startMmX: number; startMmY: number;
   } | null>(null);
   const dragRef = useRef(dragging);
   dragRef.current = dragging;
@@ -493,6 +515,33 @@ const FloorPlanCanvas = forwardRef<FloorPlanCanvasHandle, FloorPlanCanvasProps>(
     ctx.textAlign = "left";
     const titlePos = mmToPixel(0, 0, scale, offsetX, offsetY);
     ctx.fillText(floorPlan.name, titlePos.x, titlePos.y - 8);
+
+    // 범례 (좌측 하단 고정)
+    const legendX = 12;
+    const legendY = canvas.height - 60;
+    ctx.fillStyle = "rgba(255,255,255,0.85)";
+    ctx.fillRect(legendX, legendY, 100, 52);
+    ctx.strokeStyle = "#ddd";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(legendX, legendY, 100, 52);
+
+    const items = [
+      { color: "#2ecc71", letter: "W", label: "수전 (배관)" },
+      { color: "#e74c3c", letter: "G", label: "가스 배관" },
+    ];
+    items.forEach((item, i) => {
+      const iy = legendY + 14 + i * 20;
+      ctx.fillStyle = item.color;
+      ctx.beginPath(); ctx.arc(legendX + 12, iy, 5, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "#fff";
+      ctx.font = "bold 7px 'Segoe UI', sans-serif";
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText(item.letter, legendX + 12, iy);
+      ctx.fillStyle = "#555";
+      ctx.font = "11px 'Segoe UI', sans-serif";
+      ctx.textAlign = "left";
+      ctx.fillText(item.label, legendX + 22, iy + 1);
+    });
   }, [floorPlan, placements, selectedRoomId, selectedPlacementId, zoom, showGrid]);
 
   useEffect(() => {
@@ -519,6 +568,7 @@ const FloorPlanCanvas = forwardRef<FloorPlanCanvasHandle, FloorPlanCanvasProps>(
           setDragging({
             roomId: hit.roomId,
             index: hit.index,
+            placementId: hit.placement.id,
             startMmX: hit.placement.x_mm,
             startMmY: hit.placement.y_mm,
           });
@@ -528,6 +578,21 @@ const FloorPlanCanvas = forwardRef<FloorPlanCanvasHandle, FloorPlanCanvasProps>(
     },
     [floorPlan, zoom, placements, onPlacementMove],
   );
+
+  const NON_PLACEABLE_TYPES = ["bathroom", "utility"];
+
+  // placementId로 현재 roomId와 index를 찾는 헬퍼
+  const findPlacementById = useCallback((pid: number) => {
+    const pls = placementsRef.current;
+    for (const roomIdStr of Object.keys(pls)) {
+      const roomId = Number(roomIdStr);
+      const arr = pls[roomId];
+      if (!arr) continue;
+      const idx = arr.findIndex((p) => p.id === pid);
+      if (idx >= 0) return { roomId, index: idx, placement: arr[idx] };
+    }
+    return null;
+  }, []);
 
   const handleMouseMove = useCallback(
     (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -542,13 +607,40 @@ const FloorPlanCanvas = forwardRef<FloorPlanCanvasHandle, FloorPlanCanvasProps>(
       const { scale, offsetX, offsetY } = computeTransform(canvas, fp, zoom);
 
       const drag = dragRef.current;
-      const room = fp.rooms.find((r) => r.id === drag.roomId);
-      if (!room) return;
+      const globalMmX = (px - offsetX) / scale;
+      const globalMmY = (py - offsetY) / scale;
 
-      // 제품 크기를 고려한 clamp
-      const currentPlacements = placementsRef.current;
-      const roomPls = currentPlacements[drag.roomId] ?? [];
-      const pl = roomPls[drag.index];
+      // placementId로 현재 실제 위치를 찾기
+      const current = findPlacementById(drag.placementId);
+      if (!current) return;
+      // drag 상태를 최신으로 동기화
+      drag.roomId = current.roomId;
+      drag.index = current.index;
+
+      // 마우스가 어떤 방 위에 있는지 찾기
+      let targetRoom = fp.rooms.find((r) => r.id === drag.roomId);
+      for (const room of fp.rooms) {
+        if (
+          globalMmX >= room.x_mm && globalMmX <= room.x_mm + room.width_mm &&
+          globalMmY >= room.y_mm && globalMmY <= room.y_mm + room.height_mm
+        ) {
+          if (!room.is_placeable || NON_PLACEABLE_TYPES.includes(room.room_type)) continue;
+          targetRoom = room;
+          break;
+        }
+      }
+      if (!targetRoom) return;
+
+      // 다른 방으로 이동한 경우
+      if (targetRoom.id !== drag.roomId && onPlacementRoomChange) {
+        const localX = Math.max(0, Math.min(targetRoom.width_mm, globalMmX - targetRoom.x_mm));
+        const localY = Math.max(0, Math.min(targetRoom.height_mm, globalMmY - targetRoom.y_mm));
+        onPlacementRoomChange(drag.roomId, drag.index, targetRoom.id, localX, localY);
+        return;
+      }
+
+      // 같은 방 내에서 이동
+      const pl = current.placement;
       let halfW = 125, halfD = 125;
       if (pl?.product?.width_mm && pl?.product?.depth_mm) {
         const rot = pl.rotation;
@@ -558,29 +650,32 @@ const FloorPlanCanvas = forwardRef<FloorPlanCanvasHandle, FloorPlanCanvasProps>(
         halfD = Math.max(fd, 250) / 2;
       }
 
-      const mmX = (px - offsetX) / scale - room.x_mm;
-      const mmY = (py - offsetY) / scale - room.y_mm;
+      const mmX = globalMmX - targetRoom.x_mm;
+      const mmY = globalMmY - targetRoom.y_mm;
 
-      const clampedX = Math.max(halfW, Math.min(room.width_mm - halfW, mmX));
-      const clampedY = Math.max(halfD, Math.min(room.height_mm - halfD, mmY));
+      const ow = new Set(targetRoom.open_walls ?? []);
+      const minX = ow.has("west") ? -halfW * 2 : halfW;
+      const maxX = ow.has("east") ? targetRoom.width_mm + halfW * 2 : targetRoom.width_mm - halfW;
+      const minY = ow.has("north") ? -halfD * 2 : halfD;
+      const maxY = ow.has("south") ? targetRoom.height_mm + halfD * 2 : targetRoom.height_mm - halfD;
+      const clampedX = Math.max(minX, Math.min(maxX, mmX));
+      const clampedY = Math.max(minY, Math.min(maxY, mmY));
 
       onPlacementMove(drag.roomId, drag.index, clampedX, clampedY);
     },
-    [zoom, onPlacementMove],
+    [zoom, onPlacementMove, onPlacementRoomChange, findPlacementById],
   );
 
   const handleMouseUp = useCallback(() => {
     const drag = dragRef.current;
     if (drag && onPlacementMoveEnd) {
-      const currentPlacements = placementsRef.current;
-      const roomPls = currentPlacements[drag.roomId] ?? [];
-      const pl = roomPls[drag.index];
-      if (pl) {
-        onPlacementMoveEnd(drag.roomId, drag.index, pl.x_mm, pl.y_mm);
+      const current = findPlacementById(drag.placementId);
+      if (current) {
+        onPlacementMoveEnd(current.roomId, current.index, current.placement.x_mm, current.placement.y_mm);
       }
     }
     setDragging(null);
-  }, [onPlacementMoveEnd]);
+  }, [onPlacementMoveEnd, findPlacementById]);
 
   const handleDoubleClick = useCallback(
     (e: React.MouseEvent<HTMLCanvasElement>) => {
